@@ -10,12 +10,13 @@ import AdminLogin from '../pages/authPages/AdminLogin';
 import ForgotPassword from '../pages/authPages/ForgotPassword';
 import ResetPassword from '../pages/authPages/ResetPassword';
 import AgentVerification from '../pages/authPages/AgentVerify';
+import VerificationStatus from '../pages/authPages/VerificationStatus';
+import AgencyRegistration from '../pages/authPages/AgencyVerify';
 import VisitorProfilePage from '../pages/authPages/Clientmore'
 import SelectRole from '../pages/authPages/selectRole';
 import PolicyPage from '../pages/authPages/policyPage'
 import GuestRoute from '../components/GuestRoute';
 import ProtectedRoute from '../components/ProtectedRoute';
-import AgencyComingSoon from '../pages/authPages/AgencyVerify'
 import ProfessionalComingSoon from '../pages/authPages/Professional'
 import HotelComingSoon from '../pages/authPages/Hotel'
 import ServiceProviderPortal from '../pages/authPages/HandymanMore'
@@ -99,11 +100,20 @@ const authRoutes = [
     ),
   },
 
+   {
+    path: '/verification-status',
+    element: (
+      <ProtectedRoute>
+        <VerificationStatus />
+      </ProtectedRoute>
+    ),
+  },
+
     {
     path: '/agency-verification',
     element: (
       <ProtectedRoute>
-        <AgencyComingSoon />
+        <AgencyRegistration />
       </ProtectedRoute>
     ),
   },

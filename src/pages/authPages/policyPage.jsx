@@ -31,14 +31,18 @@ const PolicyPage = ()=> {
       "Agents must cooperate with clients for safe and verifiable inspections.",
       "Violation of these policies may lead to account suspension or permanent deactivation."
     ],
-    agency: [
-      "Agencies are responsible for the credibility of their listed properties and attached agents.",
-      "All agency agents must be verified before onboarding.",
-      "Agencies must ensure no agent requests direct client payments.",
-      "Refunds must be honored if clients reject verified properties post-inspection.",
-      "Agencies must uphold user safety, property accuracy, and transparent dealings.",
-      "Failure to comply with our policy may result in suspension."
-    ],
+   agency: [
+  "Real estate companies are fully responsible for the authenticity, accuracy, and legitimacy of every property they list on the platform.",
+  "All properties must undergo proper verification and documentation checks before being uploaded.",
+  "Property details such as price, location, ownership status, images, and supporting documents must be accurate and up-to-date.",
+  "Real estate companies must not request or accept direct payments from clients outside the approved payment channels.",
+  "Inspection of properties must be transparent, safe, and accessible to clients upon request.",
+  "Refunds must be honored if a client rejects a property after proper verification and inspection.",
+  "Hidden charges, misleading information, or deceptive listing practices are strictly prohibited.",
+  "Companies must maintain professionalism and protect clients from fraudulent or unsafe property dealings.",
+  "The platform reserves the right to suspend or remove any real estate company that violates these policies."
+],
+
     serviceprovider: [
       "Service providers (electricians, cleaners, movers, etc.) must only accept verified service requests.",
       "All payments are handled through the platform to prevent fraud.",
@@ -98,9 +102,14 @@ const PolicyPage = ()=> {
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center py-10 px-4">
       <div className="bg-white rounded-2xl shadow-xl max-w-3xl w-full p-8 border-t-8 border-green-600">
-        <h1 className="text-3xl font-bold text-green-700 text-center mb-6">
-          {role ? `${role.charAt(0).toUpperCase() + role.slice(1)} Policy` : "User Policy"}
-        </h1>
+      <h1 className="text-3xl font-bold text-green-700 text-center mb-6">
+        {role === "agency"
+          ? "Real Estate Company Policy"
+          : role
+          ? `${role.charAt(0).toUpperCase() + role.slice(1)} Policy`
+          : "User Policy"}
+      </h1>
+
 
         {activePolicy.length ? (
           <ul className="space-y-3 text-gray-700 max-h-[400px] overflow-y-auto border border-gray-200 rounded-lg p-4">

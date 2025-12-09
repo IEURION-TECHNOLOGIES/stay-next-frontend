@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
 import AGENTAPI from "../utils/agentaxios";
-import GlowingRealEstateLoader from "../utils/loader"
+import LoadingModal from "../utils/loader"
 
 const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   const { user, isAuthenticated, role, loading } = useAuth();
@@ -38,7 +38,7 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   }, [role]);
 
   if (loading || verifLoading) {
-    return <GlowingRealEstateLoader message="Verifying access..." logoSize={80} />;
+    return <LoadingModal message="Verifying access..." />;
   }
 
   if (!isAuthenticated) {
@@ -53,19 +53,18 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
     return <Navigate to="/unauthorized" replace />;
   }
 
-  // Agent verification logic
-  if (role === "agent") {
-    if ((verificationStatus === "pending" || verificationStatus === "rejected") &&
-        location.pathname !== "/policy" &&
-        location.pathname !== "/agent-verification") {
-      return <Navigate to="/policy" replace />;
-    }
+  // // Agent verification logic
+  // if (role === "agent") {
+  //   if ((verificationStatus === "pending" || verificationStatus === "rejected") &&
+  //       location.pathname !== "/agent-verification") {
+  //     return <Navigate to="/agent-verification" replace />;
+  //   }
 
-    // Approved agent — allow dashboard
-    if (verificationStatus === "approved" && location.pathname === "/policy") {
-      return <Navigate to="/agent-dashboard/overview" replace />;
-    }
-  }
+  //   // Approved agent — allow dashboard
+  //   if (verificationStatus === "approved") {
+  //     return <Navigate to="/agent-dashboard/overview" replace />;
+  //   }
+  // }
 
   return children;
 };

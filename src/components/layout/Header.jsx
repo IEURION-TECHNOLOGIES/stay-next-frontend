@@ -9,47 +9,39 @@ import logo from '../../assets/images/logo.png';
 // Styles
 import '../../styles/Header.css';
 
-// Main Header component
 function Header() {
   const { user, logout } = useAuth();
 
-  // Navigation links for left and right side of the nav bar
   const navItemsLeft = [
     { label: 'Properties', path: '/properties' },
     { label: 'Find my Agents', path: '/find-agents' },
     { label: 'Professionals', path: '/building' },
-    
-    
   ];
 
   const navItemsRight = [
     { label: 'Service Provider', path: '/services' },
     { label: 'Guides', path: '/guides' },
     { label: 'About Us', path: '/about' },
-
-    
   ];
 
-  // UI state
   const [menuOpen, setMenuOpen] = useState(false);
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState("EN");
 
-  // Refs for click detection
+  // NEW: Detect scroll (used for sticky header)
+  const [isScrolled, setIsScrolled] = useState(false);
+
   const languageRef = useRef(null);
   const menuRef = useRef(null);
   const toggleRef = useRef(null);
 
-  // Language update handler
   const handleLanguageUpdate = () => {
     const selected = languageRef.current?.value;
     if (selected) setSelectedLanguage(selected.slice(0, 2).toUpperCase());
     setShowLanguageModal(false);
   };
 
-  // Reusable nav link component
   const NavLink = ({ item }) => {
-    // Dropdown logic removed as we have no dropdowns now
     return (
       <Link
         to={item.path}
@@ -63,7 +55,7 @@ function Header() {
     );
   };
 
-  // Close mobile menu when clicked outside
+  // Close menu on outside click
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -77,10 +69,30 @@ function Header() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Detect scroll for mobile + desktop sticky
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 5);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   return (
-    <div className="relative z-50">
+    <div className="relative z-[9999] md:mb-32">
+
       {/* Mobile Header */}
-      <div className="flex md:hidden justify-between items-center px-2 py-2 fixed top-1 left-4 right-4 text-black">
+      <div
+        className={`
+          flex md:hidden justify-between items-center px-2 py-2 
+          fixed top-0 left-0 right-0 text-black transition-all duration-300
+          ${isScrolled 
+            ? "bg-gray-200 shadow-sm" 
+            : "bg-white/10 backdrop-blur-md border-b border-white/5 shadow-sm"
+          }
+        `}
+      >
         <button ref={toggleRef} onClick={() => setMenuOpen(!menuOpen)} className="text-2xl text-white">
           <i className={`text-gray-900 fas ${menuOpen ? "fa-times" : "fa-bars"}`}></i>
         </button>
@@ -93,42 +105,54 @@ function Header() {
         </button>
       </div>
 
-      {/* Desktop Top Utility Bar */}
-      <div className="hidden md:flex justify-between items-center bg-gray-100 px-48 py-2 shadow text-sm mb-3">
-        <div className="flex items-center space-x-8">
-          <button onClick={() => setShowLanguageModal(true)} className="flex items-center space-x-1 text-[15px] hover:text-[#22965D]">
-            <i className="fas fa-globe text-[17px]"></i>
-            <span>{selectedLanguage}</span>
-          </button>
-          <div className="text-[15px] hover:text-[#22965D] cursor-pointer">
-            <i className="fas fa-gear mr-1"></i> Site settings
-          </div>
-        </div>
-        <div className="flex items-center space-x-6 font-medium text-sm">
-          <Link to="/favorites" className="hover:text-[#22965D]">
-            <i className="fas fa-heart mr-1"></i>Favourite properties
-          </Link>
-          <Link to="/saved-searches" className="hover:text-[#22965D]">
-            <i className="fas fa-star mr-1"></i>Saved searches
-          </Link>
-          <UserDropdown user={user} logout={logout} />
-        </div>
-      </div>
+      {/* ---------------------------- */}
+      {/*     DESKTOP STICKY HEADER    */}
+      {/* ---------------------------- */}
+      <div
+        className={`hidden md:block fixed top-0 left-0 right-0 z-40 transition-all duration-300
+        `}
+      >
 
-      {/* Desktop Main Navigation */}
-      <div className="bg-transparent md:bg-white text-black px-4 md:pb-5">
-        <div className="hidden md:flex justify-center items-center mt-4">
-          <div className="flex items-center gap-5 w-full justify-center">
-            {navItemsLeft.map((item, i) => <NavLink key={i} item={item} />)}
-            <Link to="/" className="mx-10">
-              <img src={logo} alt="company logo" className="h-14 w-14" />
+        {/* Desktop Top Utility Bar */}
+        <div className="flex justify-between items-center bg-gray-100 px-48 py-2 shadow text-sm">
+          <div className="flex items-center space-x-8">
+            <button onClick={() => setShowLanguageModal(true)} className="flex items-center space-x-1 text-[15px] hover:text-[#22965D]">
+              <i className="fas fa-globe text-[17px]"></i>
+              <span>{selectedLanguage}</span>
+            </button>
+            <div className="text-[15px] hover:text-[#22965D] cursor-pointer">
+              <i className="fas fa-gear mr-1"></i> Site settings
+            </div>
+          </div>
+          <div className="flex items-center space-x-6 font-medium text-sm">
+            <Link to="/favorites" className="hover:text-[#22965D]">
+              <i className="fas fa-heart mr-1"></i>Favourite properties
             </Link>
-            {navItemsRight.map((item, i) => <NavLink key={i + navItemsLeft.length} item={item} />)}
+            <Link to="/saved-searches" className="hover:text-[#22965D]">
+              <i className="fas fa-star mr-1"></i>Saved searches
+            </Link>
+            <UserDropdown user={user} logout={logout} />
           </div>
         </div>
-      </div>
 
-      {/* Language Selection Modal */}
+        {/* Desktop Main Navigation */}
+        <div className="bg-transparent md:bg-white text-black px-4 md:pb-5 mb-4">
+          <div className="flex justify-center items-center">
+            <div className="flex items-center gap-5 w-full justify-center">
+              {navItemsLeft.map((item, i) => <NavLink key={i} item={item} />)}
+              <Link to="/" className="mx-10">
+                <img src={logo} alt="company logo" className="h-14 w-14" />
+              </Link>
+              {navItemsRight.map((item, i) => <NavLink key={i + navItemsLeft.length} item={item} />)}
+            </div>
+          </div>
+        </div>
+
+      </div>
+      {/* END DESKTOP STICKY */}
+
+
+      {/* Language Modal */}
       {showLanguageModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
           <div className="bg-white p-6 rounded shadow-lg w-80">
@@ -147,10 +171,10 @@ function Header() {
         </div>
       )}
 
-      {/* Mobile Backdrop Overlay */}
+      {/* Mobile Backdrop */}
       <div className={`fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm z-30 transition-opacity duration-300 ${menuOpen ? "opacity-100 visible" : "opacity-0 invisible"}`}></div>
 
-      {/* Mobile Side Drawer Menu */}
+      {/* Mobile Side Menu */}
       <div
         ref={menuRef}
         className={`fixed top-0 left-0 w-64 h-full bg-white shadow-lg z-40 transform transition-transform duration-300 ease-in-out ${menuOpen ? "translate-x-0" : "-translate-x-full"}`}
@@ -164,12 +188,10 @@ function Header() {
           </button>
         </div>
 
-        {/* Mobile Nav Links */}
         <div className="flex flex-col">
           {navItemsLeft.map((item, i) => <NavLink key={i} item={item} />)}
           {navItemsRight.map((item, i) => <NavLink key={i + navItemsLeft.length} item={item} />)}
 
-          {/* Mobile Footer Actions */}
           <div className="mt-4 border-t pt-4 px-4 space-y-2">
             <Link to="/favorites" className="block hover:text-[#22965D]">
               <i className="fas fa-heart mr-1"></i>Favourite properties
