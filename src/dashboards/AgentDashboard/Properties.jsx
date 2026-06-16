@@ -26,7 +26,9 @@ export default function Properties() {
   });
 
   const stored = JSON.parse(localStorage.getItem("user"));
+  console.log("Stored user:", stored);
   const userId = stored?._id;
+  console.log("User ID:", userId);
 
   useEffect(() => {
     fetchProperties();
@@ -37,7 +39,7 @@ export default function Properties() {
       const res = await AGENTAPI.get("/agents/properties/my-properties", {
         headers: { "x-user-id": userId },
       });
-      console.log(res.data);
+      console.log("t:", res.data);
       setProperties(res.data?.properties || []);
     } catch (err) {
       console.error(err);

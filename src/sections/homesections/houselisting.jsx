@@ -14,7 +14,7 @@ const Houselisting = () => {
     const fetchListings = async () => {
       try {
         console.log("📡 Fetching properties...");
-        const res = await AGENTAPI.get("/agents/properties/all");
+        const res = await AGENTAPI.get("/agents/properties/approved");
 
         const props = res.data?.properties || [];
         console.log("✅ Raw properties from backend:", props);

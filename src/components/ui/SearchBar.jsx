@@ -24,7 +24,7 @@ const SearchBar = ({
     const fetchProperties = async () => {
       try {
         setLoading(true);
-        const res = await AGENTAPI.get("/agents/properties/all");
+        const res = await AGENTAPI.get("/agents/properties/approved");
         setProperties(res.data.properties || []);
       } catch (err) {
         console.error("Error fetching properties:", err);

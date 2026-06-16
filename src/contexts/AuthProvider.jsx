@@ -80,8 +80,18 @@ export const AuthProvider = ({ children }) => {
     return normalized;
   };
 
+    const adminLogin = async (data) => {
+    const res = await API.post("/auth/admin/login", data);
+    const u = res.data.user;
+    const normalized = { ...u, _id: u._id || u.id };
+    setUser(normalized);
+    setRole(normalized.role);
+    localStorage.setItem("user", JSON.stringify(normalized));
+    return normalized;
+  };
+
   const superAdminLogin = async (data) => {
-    const res = await API.post("/admins/login", data);
+    const res = await API.post("/auth/superadmin/login", data);
     const u = res.data.user;
     const normalized = { ...u, _id: u._id || u.id };
     setUser(normalized);
@@ -139,6 +149,7 @@ export const AuthProvider = ({ children }) => {
         role,
         isAuthenticated,
         login,
+        adminLogin,
         superAdminLogin,
         logout,
         loading,

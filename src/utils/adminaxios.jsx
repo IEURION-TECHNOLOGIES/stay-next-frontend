@@ -6,7 +6,7 @@ const isLocalhost = window.location.hostname === "localhost";
 
 // ✅ Automatically choose base URL
 const ADMIN_BASE_URL = isLocalhost
-  ? "http://localhost:4500/api/admin"            // ✅ Local admin backend
+  ? "http://localhost:3001/api/admin"            // ✅ Local admin backend
   : "https://stay-next-admin-service.onrender.com/api/admin"; // ✅ Production admin backend
 
 const ADMINAPI = axios.create({

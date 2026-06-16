@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { NavLink, Link, useNavigate } from 'react-router-dom';
 import API from '../../utils/axios';
 import logo from '../../assets/images/logo.png';
@@ -8,7 +8,7 @@ const tabs = [
   { key: 'overview', label: 'Overview', icon: 'fa-chart-line' },
   { key: 'properties', label: 'My Properties', icon: 'fa-building' },
   { key: 'referrals', label: 'Referrals', icon: 'fa-user-friends' },
-   { key: 'payments', label: 'Payments', icon: 'fa-money-check-alt' },
+  { key: 'payments', label: 'Payments', icon: 'fa-money-check-alt' },
   { key: 'settings', label: 'Settings', icon: 'fa-user-cog' },
   { key: 'logout', label: 'Logout', icon: 'fa-sign-out-alt' },
 ];
@@ -18,120 +18,172 @@ const Sidebar = ({ menuOpen, setMenuOpen }) => {
   const [uploading, setUploading] = useState(false);
   const navigate = useNavigate();
 
+  const profileInputRef = useRef(null);
+  const coverInputRef = useRef(null);
 
- const handleImageUpload = async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
+  /* ================= PROFILE UPLOAD ================= */
+  const handleProfileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
-  const formData = new FormData();
-  formData.append('image', file);
+    const formData = new FormData();
+    formData.append('image', file);
 
-  try {
-    setUploading(true);
+    try {
+      setUploading(true);
+      const res = await API.post('/auth/upload-profile', formData);
+      updateUser({ ...user, profileImage: res.data.profileImage });
+    } catch (err) {
+      console.error('Profile upload error:', err.message);
+    } finally {
+      setUploading(false);
+    }
+  };
 
-    const res = await API.post('/auth/upload-profile', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
+  /* ================= COVER UPLOAD ================= */
+  const handleCoverUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
-    const imageUrl = res.data.profileImage;
+    const formData = new FormData();
+    formData.append('image', file);
 
-    updateUser({ ...user, profileImage: imageUrl }); // update context
-  } catch (err) {
-    console.error('Upload error:', err.response?.data?.message || err.message);
-  } finally {
-    setUploading(false);
-  }
-};
+    try {
+      setUploading(true);
+      const res = await API.post('/auth/upload-cover', formData);
+      updateUser({ ...user, coverImage: res.data.coverImage });
+    } catch (err) {
+      console.error('Cover upload error:', err.message);
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleLogout = () => {
-    logout();         // Clear auth context
-    navigate('/');    // Redirect to homepage
+    logout();
+    navigate('/');
   };
 
   return (
     <aside
       className={`
-        fixed top-0 left-0 h-full z-50 bg-white space-y-3 text-2xl dark:bg-gray-800 shadow p-4 text-sm w-2/3 sm:w-1/2 lg:w-64 transform transition-transform duration-500 ease-in-out
+        fixed top-0 left-0 h-full z-50 bg-white dark:bg-gray-800 shadow
+        w-2/3 sm:w-1/2 lg:w-64 transform transition-transform duration-500
         ${menuOpen ? 'translate-x-0' : '-translate-x-full'}
-        lg:relative lg:translate-x-0 lg:block
+        lg:relative lg:translate-x-0
       `}
     >
-      {/* Close button on mobile */}
-      <div className="flex justify-between items-center mb-4 lg:hidden">
+      {/* ================= HEADER ================= */}
+      <div className="flex justify-between items-center p-4 lg:hidden">
         <Link to="/">
           <img src={logo} alt="Logo" className="h-8" />
         </Link>
-
         <button
           onClick={() => setMenuOpen(false)}
-          className="text-2xl font-bold text-gray-600 dark:text-gray-100 hover:text-red-500"
+          className="text-2xl font-bold"
         >
           &times;
         </button>
       </div>
 
-      {/* Logo on large screens */}
-      <div className="hidden lg:flex justify-left mb-6">
-        <Link to="/">
-          <img src={logo} alt="Logo" className="h-10" />
-        </Link>
+      <div className="hidden lg:flex p-4">
+        <img src={logo} alt="Logo" className="h-10" />
       </div>
 
-      {/* Profile image and name */}
-      <div className="flex flex-col items-center mb-6 relative">
-        <p className="text-gray-600 dark:text-gray-100 text-xs rounded-xl bg-green-200 dark:bg-green-800 px-1.5 font-bold py-0.5 absolute z-20 ml-28">
-          Agent 
-        </p>
-
-        <div className="relative">
-          {user?.profileImage? (
-            <img
-              src={user?.profileImage}
-              alt="Profile"
-              className="w-16 h-16 rounded-full object-cover"
-            />
-          ) : (
-            <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center text-3xl text-gray-600">
-              <i className="fas fa-user"></i>
-            </div>
-          )}
-          <label className="absolute bottom-0 right-0 bg-green-500 rounded-full px-1 cursor-pointer">
-            <i className="fas fa-camera text-white text-sm"></i>
-            <input type="file" className="hidden" onChange={handleImageUpload} />
-          </label>
+      {/* ================= PROFILE SECTION ================= */}
+      <div className="relative mb-10 group">
+        {/* COVER IMAGE */}
+        <div
+          onClick={() => coverInputRef.current.click()}
+          className="h-28 cursor-pointer relative overflow-hidden"
+          style={{
+            backgroundImage: user?.coverImage
+              ? `url(${user.coverImage})`
+              : 'linear-gradient(135deg, #16a34a, #064e3b)',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+          }}
+        >
+          {/* COVER OVERLAY */}
+          <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs font-semibold transition">
+            Click to change cover
+          </div>
         </div>
 
-        <h2 className="mt-2 font-semibold text-sm text-gray-700 dark:text-gray-100">
-          {user?.name}
-        </h2>
-        {uploading && <span className="text-xs text-green-600">Uploading...</span>}
+        <input
+          type="file"
+          ref={coverInputRef}
+          className="hidden"
+          onChange={handleCoverUpload}
+        />
+
+        {/* PROFILE IMAGE */}
+        <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2">
+          <div
+            onClick={() => profileInputRef.current.click()}
+            className="relative cursor-pointer group"
+          >
+            {user?.profileImage ? (
+              <img
+                src={user.profileImage}
+                alt="Profile"
+                className="w-16 h-16 rounded-full object-cover border-4 border-white"
+              />
+            ) : (
+              <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center text-2xl">
+                <i className="fas fa-user"></i>
+              </div>
+            )}
+
+            {/* PROFILE OVERLAY */}
+            <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-[10px] font-semibold transition">
+              Change
+            </div>
+          </div>
+
+          <input
+            type="file"
+            ref={profileInputRef}
+            className="hidden"
+            onChange={handleProfileUpload}
+          />
+        </div>
       </div>
 
-      {/* Navigation links */}
-      <ul className="space-y-2 text-lg">
+      {/* ================= USER NAME ================= */}
+      <div className="text-center mt-10 mb-6">
+        <h2 className="font-semibold text-sm">
+          {user?.name}
+        </h2>
+        {uploading && (
+          <span className="text-xs text-green-600">Uploading...</span>
+        )}
+      </div>
+
+      {/* ================= NAV ================= */}
+      <ul className="space-y-2 px-4">
         {tabs.map((item) => (
-          <li key={item.key} onClick={() => setMenuOpen(false)}>
+          <li key={item.key}>
             {item.key === 'logout' ? (
               <button
                 onClick={handleLogout}
-                className="w-full flex items-center space-x-2 p-2 rounded text-md text-gray-700 dark:text-gray-100 hover:bg-red-300 hover:text-red-700 dark:hover:bg-red-300 dark:hover:text-red-700"
+                className="w-full flex items-center space-x-2 p-2 rounded hover:bg-red-200"
               >
-                <i className={`fas ${item.icon} w-5`}></i>
+                <i className={`fas ${item.icon}`}></i>
                 <span>{item.label}</span>
               </button>
             ) : (
               <NavLink
                 to={`/agent-dashboard/${item.key}`}
-                className={({ isActive }) => {
-                  const base = 'flex items-center space-x-2 p-2 rounded text-md';
-                  const active = isActive
-                    ? 'text-green-700 font-bold dark:text-green-400'
-                    : 'text-gray-700 dark:text-gray-100';
-                  const hover = 'hover:bg-gray-100 dark:hover:bg-gray-600';
-                  return `${base} ${active} ${hover}`;
-                }}
+                className={({ isActive }) =>
+                  `flex items-center space-x-2 p-2 rounded ${
+                    isActive
+                      ? 'text-green-700 font-bold'
+                      : 'text-gray-700'
+                  } hover:bg-gray-100`
+                }
               >
-                <i className={`fas ${item.icon} w-5`}></i>
+                <i className={`fas ${item.icon}`}></i>
                 <span>{item.label}</span>
               </NavLink>
             )}

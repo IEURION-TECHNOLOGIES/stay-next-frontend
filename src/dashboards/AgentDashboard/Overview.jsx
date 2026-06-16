@@ -7,7 +7,9 @@ const Overview = () => {
   const [error, setError] = useState("");
 
   const stored = JSON.parse(localStorage.getItem("user"));
+  console.log("Stored user:", stored);
   const userId = stored?._id;
+  console.log("User ID:", userId);
 
   useEffect(() => {
   const fetchOverview = async () => {

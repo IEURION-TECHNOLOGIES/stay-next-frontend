@@ -16,7 +16,7 @@ function PropertyShowcaseCard() {
       setLoading(true);
       const params = new URLSearchParams();
 
-      const res = await AGENTAPI.get(`/agents/properties/all`);
+      const res = await AGENTAPI.get(`/agents/properties/approved`);
       const data = res.data.properties || [];
 
       const uniqueProps = Object.values(

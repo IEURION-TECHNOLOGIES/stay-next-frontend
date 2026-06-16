@@ -76,7 +76,7 @@ function SearchResultsPage() {
         setLoading(true);
         setResults([]);
 
-        const res = await AGENTAPI.get("/agents/properties/all");
+        const res = await AGENTAPI.get("/agents/properties/approved");
         const props = res.data.properties || [];
         const q = queryParam.toLowerCase();
 

@@ -7,17 +7,21 @@ import API from '../../utils/axios';
 
 const SuperAdminLogin = () => {
   const navigate = useNavigate();
-  const { login, fetchUser } = useAuth();
+  const { superAdminLogin, fetchUser } = useAuth();
 
-  const [formData, setFormData] = useState({ email: '', password: '' });
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+    superKey: '',
+  });
+
   const [error, setError] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const [showModal, setShowModal] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
   const modalTimeoutRef = useRef(null);
-
-  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     return () => {
@@ -26,37 +30,37 @@ const SuperAdminLogin = () => {
   }, []);
 
   const handleChange = (e) => {
-    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    setFormData(prev => ({
+      ...prev,
+      [e.target.name]: e.target.value
+    }));
   };
 
-  // --- Email/Password Login ---
+  // ===== EMAIL LOGIN =====
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError([]);
     setLoading(true);
- const user1 = await login(formData);
+
     try {
-      const user = await login(formData);
+      const user = await superAdminLogin(formData);
 
       if (user?.role !== 'superadmin') {
         setError(['Access denied. You are not a Super Admin.']);
-        setLoading(false);
         return;
       }
 
       await fetchUser();
       navigate('/super-admin-dashboard/overview');
     } catch (err) {
-        console.log(user1);
       const msg = err.response?.data?.message;
-      if (msg) setError([msg]);
-      else setError(['Unable to sign in. Please try again.']);
+      setError([msg || 'Unable to sign in.']);
     } finally {
       setLoading(false);
     }
   };
 
-  // --- Google Login ---
+  // ===== GOOGLE LOGIN =====
   const handleGoogleSuccess = async (credentialResponse) => {
     if (!credentialResponse?.credential) {
       setError(['Google sign-in failed']);
@@ -69,7 +73,7 @@ const SuperAdminLogin = () => {
     setShowModal(true);
 
     try {
-      const res = await API.post('/auth/google', {
+      const res = await API.post('/auth/superadmin/google', {
         token: credentialResponse.credential,
       });
 
@@ -77,141 +81,94 @@ const SuperAdminLogin = () => {
 
       if (user?.role !== 'superadmin') {
         setError(['Access denied. You are not a Super Admin.']);
-        setShowModal(false);
-        setLoading(false);
         return;
       }
 
       await fetchUser();
-      setShowModal(false);
-      navigate('/superadmin-dashboard/overview');
+      navigate('/super-admin-dashboard/overview');
     } catch (err) {
-      console.error(err);
       setError(['Google login failed']);
-      setShowModal(false);
     } finally {
+      setShowModal(false);
       setLoading(false);
     }
   };
 
   return (
     <>
-      <div
-        className="bg-gray-200 min-h-screen flex items-center justify-center bg-cover bg-center"
-        style={{ backgroundImage: "url('/bg-realestate.jpg')" }}
-      >
-        <div className="bg-white shadow-lg p-6 rounded-lg max-w-md w-full z-10 backdrop-blur-sm bg-opacity-90 transition-all duration-200">
+      <div className="bg-gray-200 min-h-screen flex items-center justify-center">
+        <div className="bg-white shadow-lg p-6 rounded-lg max-w-md w-full">
           <div className="flex flex-col items-center mb-6">
             <img src={logo} alt="Logo" className="w-24 h-24 mb-2" />
-            <h2 className="text-2xl font-bold text-center text-gray-800">
-              Super Admin Login
-            </h2>
-            <p className="text-gray-500 text-sm text-center">
-              Please Login to continue
-            </p>
+            <h2 className="text-2xl font-bold">Super Admin Login</h2>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4" aria-describedby="form-errors">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <input
               type="email"
               name="email"
-              placeholder="Email address"
-              className="border p-3 w-full rounded text-black"
+              placeholder="Email"
+              className="border p-3 w-full rounded"
               value={formData.email}
               onChange={handleChange}
               required
-              autoComplete="email"
-              disabled={loading}
             />
 
-            <div className="relative w-full">
+            <div className="relative">
               <input
                 type={showPassword ? 'text' : 'password'}
                 name="password"
                 placeholder="Password"
-                className="border p-3 w-full rounded text-black pr-10"
+                className="border p-3 w-full rounded pr-10"
                 value={formData.password}
                 onChange={handleChange}
                 required
-                autoComplete="current-password"
-                disabled={loading}
               />
+
+              <input
+              type="password"
+              name="superKey"
+              placeholder="Super Admin Key"
+              className="border p-3 w-full rounded"
+              value={formData.superKey}
+              onChange={handleChange}
+              required
+            />
               <button
                 type="button"
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
+                className="absolute right-3 top-1/2 -translate-y-1/2"
                 onClick={() => setShowPassword(!showPassword)}
               >
-                <i className={`fa ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`} />
+                👁
               </button>
             </div>
 
-            <div id="form-errors" className="space-y-1">
-              {error.map((msg, i) => (
-                <p key={i} className="text-red-500 text-sm" role="alert">
-                  {msg}
-                </p>
-              ))}
-            </div>
+            {error.map((msg, i) => (
+              <p key={i} className="text-red-500 text-sm">{msg}</p>
+            ))}
 
             <button
               type="submit"
-              className="bg-green-600 text-white py-2 px-4 w-full rounded hover:bg-green-700 transition duration-200 disabled:opacity-60"
               disabled={loading}
+              className="bg-green-600 text-white py-2 w-full rounded"
             >
               {loading ? 'Logging in...' : 'Login'}
             </button>
           </form>
 
-          <div className="mt-6">
-            <div className="flex items-center justify-center my-3">
-              <hr className="flex-1 border-gray-300" />
-              <span className="px-2 text-gray-500 text-sm">OR</span>
-              <hr className="flex-1 border-gray-300" />
-            </div>
-            <div className="flex flex-col space-y-3 items-center">
-              <GoogleLogin
-                onSuccess={handleGoogleSuccess}
-                onError={() => setError(['Google sign in failed'])}
-                useOneTap
-                text="continue_with"
-              />
-              <p className="text-sm text-gray-500">
-                Sign in quickly with Google
-              </p>
-            </div>
+          <div className="mt-6 text-center">
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={() => setError(['Google sign in failed'])}
+            />
           </div>
         </div>
       </div>
 
-      {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black opacity-50"></div>
-          <div className="relative bg-white rounded-lg shadow-lg p-6 max-w-sm w-full mx-4">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">
-              {modalMessage}
-            </h3>
-            <div className="flex justify-center">
-              <svg
-                className="animate-spin h-10 w-10 text-green-600"
-                viewBox="0 0 24 24"
-                fill="none"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                ></circle>
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                ></path>
-              </svg>
-            </div>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded shadow">
+            <p>{modalMessage}</p>
           </div>
         </div>
       )}
@@ -219,5 +176,4 @@ const SuperAdminLogin = () => {
   );
 };
 
-export default SuperAdminLogin
-
+export default SuperAdminLogin;

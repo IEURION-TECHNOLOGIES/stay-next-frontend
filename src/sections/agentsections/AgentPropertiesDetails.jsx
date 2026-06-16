@@ -28,6 +28,7 @@ function AgentPropertiesDetails() {
       try {
         setLoading(true);
         const res = await AGENTAPI.get(`/agents/properties/single/${id}`);
+        console.log(res.data.property)
         setProperty(res.data.property);
       } catch (err) {
         console.error("Failed to fetch property:", err);
@@ -201,66 +202,61 @@ function AgentPropertiesDetails() {
         </div>
       )}
 
-      {/* AGENT INFO */}
-      {property.agent && (
-        <div className="bg-white rounded-xl shadow-md p-6">
-          <h2 className="text-xl font-semibold mb-4">Agent Info</h2>
+     {/* AGENT INFO */}
+{property.agent && (
+  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+    <h2 className="text-lg font-semibold text-gray-900 mb-4">
+      Agent Information
+    </h2>
 
-          <div className="flex items-center gap-4 mb-2">
-            <img
-              src={
-                property.agent?.profileImage?.trim()
-                  ? property.agent.profileImage
-                  : "https://via.placeholder.com/100"
-              }
-              alt="Agent"
-              className="w-16 h-16 rounded-full object-cover border-2 border-green-600"
-            />
+    <div className="flex items-center gap-4">
+      {/* Avatar */}
+      <div className="relative">
+        <img
+          src={
+            property.agent?.user.profileImage?.trim()
+              ? property.agent?.user.profileImage
+              : "https://ui-avatars.com/api/?name=" +
+                encodeURIComponent(property.agent?.user.name || "Agent") +
+                "&background=16a34a&color=fff"
+          }
+          alt="Agent"
+          className="w-16 h-16 rounded-full object-cover border-2 border-green-600"
+        />
 
-            <div>
-              <h3 className="font-bold text-gray-900">{property.agent.name}</h3>
-              <p className="text-gray-600">
-                {property.agent.verification?.state || "Unverified"}
-              </p>
-            </div>
-          </div>
+        {/* Verification Badge */}
+        <span
+          className={`absolute -bottom-1 right-1 px-2 py-0.5 text-xs rounded-full font-medium ${
+            property.agent.status === "approved"
+              ? "bg-green-600 text-white"
+              : "bg-gray-200 text-gray-600"
+          }`}
+        >
+          {property.agent.status === "approved"
+            ? "Verified"
+            : "Pending"}
+        </span>
+      </div>
 
-          {/* Contact Buttons */}
-          <div className="flex flex-wrap gap-4 mt-4">
-            {property.agent.phone && (
-              <a
-                href={`tel:${property.agent.phone}`}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-              >
-                Call
-              </a>
-            )}
+      {/* Agent Meta */}
+      <div>
+        <h3 className="font-semibold text-gray-900">
+          {property.agent?.user.name || "Unnamed Agent"}
+        </h3>
 
-            {property.agent.whatsapp && (
-              <a
-                href={`https://wa.me/${property.agent.whatsapp}`}
-                target="_blank"
-                rel="noreferrer"
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-              >
-                WhatsApp
-              </a>
-            )}
+        <p className="text-sm text-gray-500">
+          {property.agent.state || "Location not specified"}
+        </p>
+      </div>
+    </div>
 
-            {property.agent.email && (
-              <a
-                href={`mailto:${property.agent.email}`}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-              >
-                Email
-              </a>
-            )}
-          </div>
-        </div>
-      )}
+  </div>
+)}
 
     </div>
   );
 }
 
 export default AgentPropertiesDetails;
+
+

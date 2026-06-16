@@ -16,7 +16,7 @@ function PurposeCard({ transactionType }) {
       try {
         setLoading(true);
         setError(null);
-        const res = await AGENTAPI.get(`/agents/properties/all`);
+        const res = await AGENTAPI.get(`/agents/properties/approved`);
         setAllProperties(res.data.properties || []);
       } catch (err) {
         console.error("❌ Failed to fetch properties:", err);

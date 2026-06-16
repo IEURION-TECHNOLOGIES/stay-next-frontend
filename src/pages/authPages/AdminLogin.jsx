@@ -7,7 +7,7 @@ import API from "../../utils/axios";
 
 const AdminLogin = () => {
   const navigate = useNavigate();
-  const { login, fetchUser } = useAuth();
+  const { adminLogin, fetchUser } = useAuth();
 
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState([]);
@@ -41,7 +41,7 @@ const AdminLogin = () => {
     setLoading(true);
 
     try {
-      const user = await login(formData);
+      const user = await adminLogin(formData);
 
       if (user?.role !== "admin") {
         setError(["Access denied. Only admins can log in here."]);
@@ -75,7 +75,7 @@ const AdminLogin = () => {
     setShowModal(true);
 
     try {
-      const res = await API.post("/auth/google", {
+      const res = await API.post("/auth/admin/google", {
         token: credentialResponse.credential,
       });
       const user = res.data.user;

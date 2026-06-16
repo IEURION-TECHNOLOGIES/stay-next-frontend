@@ -8,6 +8,7 @@ import AdminManagement from "../dashboards/SuperAdmin/AdminManagement";
 import AdminDashboard from "../dashboards/AdminDashboard/AdminDashboard";
 import AdminOverview from "../dashboards/AdminDashboard/Overview";
 import AdminAgentManagement from "../dashboards/AdminDashboard/AgentManagement";
+import AdminPropertyManagement from "../dashboards/AdminDashboard/PropertiesManagement";
 
 // ================== AGENT DASHBOARD ==================
 import AgentDashboard from "../dashboards/AgentDashboard/AgentDashboard";
@@ -76,6 +77,8 @@ const dashboardRoutes = [
       { index: true, element: <Navigate to="overview" replace /> },
       { path: "overview/*", element: <AdminOverview /> },
       { path: "agents/", element: <AdminAgentManagement /> },
+      { path: "properties/", element: <AdminPropertyManagement /> },
+      
     ],
   },
 
