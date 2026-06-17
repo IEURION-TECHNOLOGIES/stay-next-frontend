@@ -1,9 +1,8 @@
 import axios from "axios";
 
 const ADMIN_BASE_URL = "https://stay-next-admin-service.onrender.com/api/admin";
-=======
 const AUTH_BASE_URL = "https://stay-next-auth-service-4.onrender.com/api";
-const ADMIN_BASE_URL = "https://stay-next-admin-service.onrender.com/api/admin";
+
 
 // 🔐 Instance for hitting Auth Services
 export const API = axios.create({
@@ -38,8 +37,7 @@ const injectToken = (config) => {
 };
 
 
-export default API;
-=======
+  
 API.interceptors.request.use(injectToken, (err) => Promise.reject(err));
 AdminAPI.interceptors.request.use(injectToken, (err) => Promise.reject(err));
 
