@@ -9,22 +9,18 @@ export const AuthProvider = ({ children }) => {
 
   const isAuthenticated = !!user;
 
-  // =============================
-  // Fetch Current User (any role)
-  // =============================
   const fetchUser = async () => {
     try {
       const res = await API.get("/auth/getMe");
       const u = res.data.user || null;
 
       if (u && u._id) {
-        const normalized = { ...u, _id: u._id || u.id }; // normalize
+        const normalized = { ...u, _id: u._id || u.id };
         setUser(normalized);
         setRole(normalized.role || "");
         localStorage.setItem("user", JSON.stringify(normalized));
         return normalized;
       } else {
-        // User not found in backend → clear localStorage
         setUser(null);
         setRole("");
         localStorage.removeItem("user");
@@ -32,7 +28,6 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (err) {
       console.warn("fetchUser failed", err);
-      // Clear localStorage on fetch error (assume user might not exist)
       setUser(null);
       setRole("");
       localStorage.removeItem("user");
@@ -48,15 +43,12 @@ export const AuthProvider = ({ children }) => {
       const parsed = JSON.parse(storedUser);
       const normalized = { ...parsed, _id: parsed._id || parsed.id };
 
-      // Immediately check with backend if user still exists
       fetchUser().then((fetched) => {
         if (!fetched) {
-          // Backend says no user → clear localStorage and state
           setUser(null);
           setRole("");
           localStorage.removeItem("user");
         } else {
-          // Backend verified → use stored user
           setUser(normalized);
           setRole(normalized.role || "");
         }
@@ -67,9 +59,6 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  // =============================
-  // Login functions
-  // =============================
   const login = async (data) => {
     const res = await API.post("/auth/login", data);
     const u = res.data.user;
@@ -77,16 +66,18 @@ export const AuthProvider = ({ children }) => {
     setUser(normalized);
     setRole(normalized.role);
     localStorage.setItem("user", JSON.stringify(normalized));
+    if (u.token) localStorage.setItem("token", u.token); // ✅
     return normalized;
   };
 
-    const adminLogin = async (data) => {
+  const adminLogin = async (data) => {
     const res = await API.post("/auth/admin/login", data);
     const u = res.data.user;
     const normalized = { ...u, _id: u._id || u.id };
     setUser(normalized);
     setRole(normalized.role);
     localStorage.setItem("user", JSON.stringify(normalized));
+    if (u.token) localStorage.setItem("token", u.token); // ✅
     return normalized;
   };
 
@@ -97,22 +88,18 @@ export const AuthProvider = ({ children }) => {
     setUser(normalized);
     setRole(normalized.role);
     localStorage.setItem("user", JSON.stringify(normalized));
+    if (u.token) localStorage.setItem("token", u.token); // ✅
     return normalized;
   };
 
-  // =============================
-  // Logout
-  // =============================
   const logout = async () => {
-    await API.post("/auth/logout").catch(() => {}); // ignore errors
+    await API.post("/auth/logout").catch(() => {});
     setUser(null);
     setRole("");
     localStorage.removeItem("user");
+    localStorage.removeItem("token"); // ✅
   };
 
-  // =============================
-  // Update User Info
-  // =============================
   const updateUser = (updated, callback = () => {}) => {
     if (typeof updated === "function") {
       setUser((prev) => {
@@ -134,9 +121,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // =============================
-  // Reset Password
-  // =============================
   const resetPassword = async ({ token, newPassword }) => {
     const res = await API.post(`/auth/reset-password/${token}`, { newPassword });
     return res.data;
@@ -164,5 +148,3 @@ export const AuthProvider = ({ children }) => {
 };
 
 export default AuthProvider;
-
-
