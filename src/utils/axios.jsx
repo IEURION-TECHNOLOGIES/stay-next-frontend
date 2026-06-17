@@ -2,12 +2,9 @@
 import axios from "axios";
 
 // ✅ Automatically detect environment
-const isLocalhost = window.location.hostname === "localhost";
 
 // ✅ Switch BASE URL automatically
-const AUTH_BASE_URL = isLocalhost
-  ? "http://localhost:3000/api" // Local
-  : "https://stay-next-auth-service-4.onrender.com/api"; // Production
+const AUTH_BASE_URL = "https://stay-next-auth-service-4.onrender.com/api"; // Production
 
 const API = axios.create({
   baseURL: AUTH_BASE_URL,

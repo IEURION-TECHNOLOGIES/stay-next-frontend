@@ -6,39 +6,22 @@ import { GoogleLogin } from '@react-oauth/google';
 import API from '../../utils/axios';
 import LoadingModal from '../../utils/loader';
 
-/* ===============================
-   SUSPENDED ACCOUNT MODAL
-================================ */
 const SuspendedAccountModal = ({ open, message, onClose }) => {
   if (!open) return null;
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[999]">
       <div className="bg-white max-w-md w-full rounded-2xl p-6 text-center shadow-xl">
-
         <div className="text-red-600 text-5xl mb-3">🚫</div>
-
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">
-          Account Suspended
-        </h2>
-
+        <h2 className="text-2xl font-bold text-gray-800 mb-2">Account Suspended</h2>
         <p className="text-gray-600 mb-6">
-          {message ||
-            "Your account has been suspended. Please contact support for assistance."}
+          {message || "Your account has been suspended. Please contact support for assistance."}
         </p>
-
         <div className="flex gap-3">
-          <a
-            href="/support"
-            className="flex-1 py-2 bg-green-600 text-white rounded-lg"
-          >
+          <a href="/support" className="flex-1 py-2 bg-green-600 text-white rounded-lg text-center">
             Contact Support
           </a>
-
-          <button
-            onClick={onClose}
-            className="flex-1 py-2 border rounded-lg"
-          >
+          <button onClick={onClose} className="flex-1 py-2 border rounded-lg">
             Close
           </button>
         </div>
@@ -56,7 +39,6 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // 🔒 Suspension state
   const [showSuspendedModal, setShowSuspendedModal] = useState(false);
   const [suspendedMessage, setSuspendedMessage] = useState('');
 
@@ -73,9 +55,6 @@ const Login = () => {
     else navigate('/');
   };
 
-  /* ===============================
-     EMAIL / PASSWORD LOGIN
-  ================================ */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError([]);
@@ -89,7 +68,6 @@ const Login = () => {
       const status = err.response?.status;
       const msg = err.response?.data?.message;
 
-      // 🚫 Suspended account
       if (status === 403 && msg?.toLowerCase().includes('suspend')) {
         setSuspendedMessage(msg);
         setShowSuspendedModal(true);
@@ -107,9 +85,6 @@ const Login = () => {
     }
   };
 
-  /* ===============================
-     GOOGLE LOGIN
-  ================================ */
   const handleGoogleSuccess = async (credentialResponse) => {
     if (!credentialResponse?.credential) {
       return setError(['Google sign-in failed']);
@@ -124,13 +99,18 @@ const Login = () => {
       });
 
       const user = res.data.user;
+      
+      // Capture structural JWT output returned by Google registration/login route
+      if (res.data?.token || user?.token) {
+        localStorage.setItem("token", res.data.token || user.token);
+      }
+      
       await fetchUser();
       redirectByRole(user.role);
     } catch (err) {
       const status = err.response?.status;
       const msg = err.response?.data?.message;
 
-      // 🚫 Suspended Google user
       if (status === 403 && msg?.toLowerCase().includes('suspend')) {
         setSuspendedMessage(msg);
         setShowSuspendedModal(true);
@@ -145,10 +125,8 @@ const Login = () => {
 
   return (
     <>
-      {/* ⏳ Loading */}
       <LoadingModal loading={loading} message="Logging you in…" />
 
-      {/* 🚫 Suspended Modal */}
       <SuspendedAccountModal
         open={showSuspendedModal}
         message={suspendedMessage}
@@ -161,18 +139,12 @@ const Login = () => {
           style={{ backgroundImage: "url('/bg-realestate.jpg')" }}
         >
           <div className="bg-white shadow-lg p-6 rounded-lg max-w-md w-full backdrop-blur-sm bg-opacity-90">
-
             <div className="flex flex-col items-center mb-6">
               <img src={logo} alt="Logo" className="w-24 h-24 mb-2" />
-              <h2 className="text-2xl font-bold text-gray-800">
-                Welcome Back
-              </h2>
-              <p className="text-gray-500 text-sm">
-                Please Login to continue
-              </p>
+              <h2 className="text-2xl font-bold text-gray-800">Welcome Back</h2>
+              <p className="text-gray-500 text-sm">Please Login to continue</p>
             </div>
 
-            {/* Errors */}
             {error.length > 0 && (
               <div className="space-y-1 mb-4 text-center">
                 {error.map((msg, i) => (
@@ -228,7 +200,6 @@ const Login = () => {
               </button>
             </form>
 
-            {/* Google Login */}
             <div className="mt-6">
               <div className="flex items-center justify-center my-3">
                 <hr className="flex-1 border-gray-300" />
@@ -244,7 +215,6 @@ const Login = () => {
                 />
               </div>
             </div>
-
           </div>
         </div>
       )}

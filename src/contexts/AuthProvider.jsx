@@ -11,7 +11,11 @@ export const AuthProvider = ({ children }) => {
 
   const fetchUser = async () => {
     try {
-      const res = await API.get("/auth/getMe");
+      const token = localStorage.getItem("token");
+      
+      // Force token header fallback for cross-domain fetchUser verification
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      const res = await API.get("/auth/getMe", { headers });
       const u = res.data.user || null;
 
       if (u && u._id) {
@@ -24,6 +28,7 @@ export const AuthProvider = ({ children }) => {
         setUser(null);
         setRole("");
         localStorage.removeItem("user");
+        localStorage.removeItem("token");
         return null;
       }
     } catch (err) {
@@ -31,6 +36,7 @@ export const AuthProvider = ({ children }) => {
       setUser(null);
       setRole("");
       localStorage.removeItem("user");
+      localStorage.removeItem("token");
       return null;
     } finally {
       setLoading(false);
@@ -48,6 +54,7 @@ export const AuthProvider = ({ children }) => {
           setUser(null);
           setRole("");
           localStorage.removeItem("user");
+          localStorage.removeItem("token");
         } else {
           setUser(normalized);
           setRole(normalized.role || "");
@@ -61,14 +68,17 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (data) => {
     const res = await API.post("/auth/login", data);
-    console.log("LOGIN RESPONSE:", res.data); // ← add this
+    console.log("LOGIN RESPONSE:", res.data);
     const u = res.data.user;
-    console.log("TOKEN:", u.token);
     const normalized = { ...u, _id: u._id || u.id };
+    
+    if (res.data?.token || u?.token) {
+      localStorage.setItem("token", res.data.token || u.token);
+    }
+    
     setUser(normalized);
     setRole(normalized.role);
     localStorage.setItem("user", JSON.stringify(normalized));
-    if (u.token) localStorage.setItem("token", u.token); // ✅
     return normalized;
   };
 
@@ -76,10 +86,14 @@ export const AuthProvider = ({ children }) => {
     const res = await API.post("/auth/admin/login", data);
     const u = res.data.user;
     const normalized = { ...u, _id: u._id || u.id };
+    
+    if (res.data?.token || u?.token) {
+      localStorage.setItem("token", res.data.token || u.token);
+    }
+    
     setUser(normalized);
     setRole(normalized.role);
     localStorage.setItem("user", JSON.stringify(normalized));
-    if (u.token) localStorage.setItem("token", u.token); // ✅
     return normalized;
   };
 
@@ -87,19 +101,25 @@ export const AuthProvider = ({ children }) => {
     const res = await API.post("/auth/superadmin/login", data);
     const u = res.data.user;
     const normalized = { ...u, _id: u._id || u.id };
+    
+    if (res.data?.token || u?.token) {
+      localStorage.setItem("token", res.data.token || u.token);
+    }
+    
     setUser(normalized);
     setRole(normalized.role);
     localStorage.setItem("user", JSON.stringify(normalized));
-    if (u.token) localStorage.setItem("token", u.token); // ✅
     return normalized;
   };
 
   const logout = async () => {
-    await API.post("/auth/logout").catch(() => {});
+    const token = localStorage.getItem("token");
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    await API.post("/auth/logout", {}, { headers }).catch(() => {});
     setUser(null);
     setRole("");
     localStorage.removeItem("user");
-    localStorage.removeItem("token"); // ✅
+    localStorage.removeItem("token");
   };
 
   const updateUser = (updated, callback = () => {}) => {
