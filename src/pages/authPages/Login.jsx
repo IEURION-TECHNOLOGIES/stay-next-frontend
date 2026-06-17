@@ -6,9 +6,6 @@ import { GoogleLogin } from '@react-oauth/google';
 import API from '../../utils/axios';
 import LoadingModal from '../../utils/loader';
 
-/* ===============================
-    SUSPENDED ACCOUNT MODAL
-================================ */
 const SuspendedAccountModal = ({ open, message, onClose }) => {
   if (!open) return null;
 
@@ -35,14 +32,13 @@ const SuspendedAccountModal = ({ open, message, onClose }) => {
 
 const Login = () => {
   const navigate = useNavigate();
-  const { login, fetchUser } = useAuth();
+  const { fetchUser } = useAuth(); // Destructure what we need for validation syncing
 
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [error, setError] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // 🔒 Suspension state
   const [showSuspendedModal, setShowSuspendedModal] = useState(false);
   const [suspendedMessage, setSuspendedMessage] = useState('');
 
@@ -59,29 +55,41 @@ const Login = () => {
     else navigate('/');
   };
 
-  /* ===============================
-      EMAIL / PASSWORD LOGIN
-  ================================ */
+  /* =========================================
+      EMAIL / PASSWORD SUBMIT (DIRECT CAPTURE)
+     ========================================= */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError([]);
     setLoading(true);
 
     try {
-      const user = await login(formData);
+      // 1. Send the login request directly using our configured API axios instance
+      const res = await API.post("/auth/login", formData);
       
-      // ✅ Backup Safeguard: If your context layout missed it, lock it here directly
-      if (user?.token) {
-        localStorage.setItem("token", user.token);
+      console.log("Direct Form Submit Response Payload:", res.data);
+
+      const u = res.data?.user;
+      
+      // 2. 🚀 THE ULTIMATE FIX: Isolate the token directly from the response and force it to storage!
+      const token = res.data?.token || u?.token;
+      if (token) {
+        localStorage.setItem("token", token);
+        console.log("🔒 Token caught and locked into localStorage by component directly!");
+      } else {
+        console.warn("⚠️ Backend responded successfully, but no string token property was found in the data payload.");
       }
-      
+
+      // 3. Sync and update the app context context state safely
       await fetchUser();
-      redirectByRole(user?.role);
+      
+      // 4. Redirect
+      redirectByRole(u?.role);
     } catch (err) {
+      console.error("Form submit failure:", err);
       const status = err.response?.status;
       const msg = err.response?.data?.message;
 
-      // 🚫 Suspended account
       if (status === 403 && msg?.toLowerCase().includes('suspend')) {
         setSuspendedMessage(msg);
         setShowSuspendedModal(true);
@@ -99,9 +107,9 @@ const Login = () => {
     }
   };
 
-  /* ===============================
-      GOOGLE LOGIN
-  ================================ */
+  /* =========================================
+      GOOGLE SIGN-IN SUBMIT
+     ========================================= */
   const handleGoogleSuccess = async (credentialResponse) => {
     if (!credentialResponse?.credential) {
       return setError(['Google sign-in failed']);
@@ -117,10 +125,11 @@ const Login = () => {
 
       const user = res.data.user;
       
-      // ✅ Capture structural JWT output returned by Google registration/login route
+      // Capture structural JWT output returned by Google registration/login route
       const token = res.data?.token || user?.token;
       if (token) {
         localStorage.setItem("token", token);
+        console.log("🔒 Google Token locked into localStorage successfully!");
       }
       
       await fetchUser();
@@ -129,7 +138,6 @@ const Login = () => {
       const status = err.response?.status;
       const msg = err.response?.data?.message;
 
-      // 🚫 Suspended Google user
       if (status === 403 && msg?.toLowerCase().includes('suspend')) {
         setSuspendedMessage(msg);
         setShowSuspendedModal(true);
@@ -144,10 +152,8 @@ const Login = () => {
 
   return (
     <>
-      {/* ⏳ Loading */}
       <LoadingModal loading={loading} message="Logging you in…" />
 
-      {/* 🚫 Suspended Modal */}
       <SuspendedAccountModal
         open={showSuspendedModal}
         message={suspendedMessage}
@@ -160,14 +166,12 @@ const Login = () => {
           style={{ backgroundImage: "url('/bg-realestate.jpg')" }}
         >
           <div className="bg-white shadow-lg p-6 rounded-lg max-w-md w-full backdrop-blur-sm bg-opacity-90">
-
             <div className="flex flex-col items-center mb-6">
               <img src={logo} alt="Logo" className="w-24 h-24 mb-2" />
               <h2 className="text-2xl font-bold text-gray-800">Welcome Back</h2>
               <p className="text-gray-500 text-sm">Please Login to continue</p>
             </div>
 
-            {/* Errors */}
             {error.length > 0 && (
               <div className="space-y-1 mb-4 text-center">
                 {error.map((msg, i) => (
@@ -223,7 +227,6 @@ const Login = () => {
               </button>
             </form>
 
-            {/* Google Login */}
             <div className="mt-6">
               <div className="flex items-center justify-center my-3">
                 <hr className="flex-1 border-gray-300" />
@@ -239,7 +242,6 @@ const Login = () => {
                 />
               </div>
             </div>
-
           </div>
         </div>
       )}
