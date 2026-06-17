@@ -71,25 +71,31 @@ export const AuthProvider = ({ children }) => {
   const processLoginResponse = (res) => {
     console.log("LOGIN RESPONSE PAYLOAD:", res.data);
     
-    const u = res.data?.user;
+    // 1. Extract the raw nested user block
+    const rawUser = res.data?.user;
     
-    // 🚀 Bulletproof token extraction fallback sequence
-    const token = res.data?.token || u?.token || res.data?.data?.token;
+    // 2. 🚀 THE CRITICAL CAPTURE: Look directly inside the user object block for the token!
+    const token = res.data?.token || rawUser?.token;
     
     if (token) {
       localStorage.setItem("token", token);
+      console.log("✅ Token successfully isolated and locked into localStorage!");
     } else {
-      console.warn("No authentication token detected in the server response.");
+      console.warn("⚠️ No authentication token detected in the server response payload.");
     }
     
-    const normalized = { ...u, _id: u?._id || u?.id };
+    // 3. Clean up the user object so we don't save the token inside the user state duplicate
+    const cleanUser = { ...rawUser };
+    delete cleanUser.token; // Clean extraction tracking
+    
+    const normalized = { ...cleanUser, _id: cleanUser?._id || cleanUser?.id };
+    
     setUser(normalized);
     setRole(normalized.role || "");
     localStorage.setItem("user", JSON.stringify(normalized));
     
     return normalized;
   };
-
   /* =========================================
       AUTHENTICATION GATEWAYS
      ========================================= */
