@@ -15,6 +15,7 @@ export const AdminAPI = axios.create({
   withCredentials: true,
 });
 
+
 // Attach interceptor to BOTH instances to guarantee headers are appended dynamically
 const injectToken = (config) => {
   const token = localStorage.getItem("token");
