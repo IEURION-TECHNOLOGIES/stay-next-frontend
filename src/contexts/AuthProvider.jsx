@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import AuthContext from "./AuthContext";
-import API from "../utils/axios";
+import { API } from "../utils/axios"; // ✅ Named import ensures consistency with the new configuration
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -9,6 +9,7 @@ export const AuthProvider = ({ children }) => {
 
   const isAuthenticated = !!user;
 
+  // 🔄 Sync and validate user state on boot/refresh
   const fetchUser = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -25,24 +26,27 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem("user", JSON.stringify(normalized));
         return normalized;
       } else {
-        setUser(null);
-        setRole("");
-        localStorage.removeItem("user");
-        localStorage.removeItem("token");
+        clearAuthSession();
         return null;
       }
     } catch (err) {
-      console.warn("fetchUser failed", err);
-      setUser(null);
-      setRole("");
-      localStorage.removeItem("user");
-      localStorage.removeItem("token");
+      console.warn("fetchUser validation session expired or failed:", err.message);
+      clearAuthSession();
       return null;
     } finally {
       setLoading(false);
     }
   };
 
+  // 🧼 Centralized clear session utility
+  const clearAuthSession = () => {
+    setUser(null);
+    setRole("");
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
+  };
+
+  // 📦 Initialize App Auth State
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
@@ -51,10 +55,7 @@ export const AuthProvider = ({ children }) => {
 
       fetchUser().then((fetched) => {
         if (!fetched) {
-          setUser(null);
-          setRole("");
-          localStorage.removeItem("user");
-          localStorage.removeItem("token");
+          clearAuthSession();
         } else {
           setUser(normalized);
           setRole(normalized.role || "");
@@ -66,61 +67,58 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  const login = async (data) => {
-    const res = await API.post("/auth/login", data);
-    console.log("LOGIN RESPONSE:", res.data);
-    const u = res.data.user;
-    const normalized = { ...u, _id: u._id || u.id };
+  // ⚙️ Unified processor to capture token structures flawlessly
+  const processLoginResponse = (res) => {
+    console.log("LOGIN RESPONSE PAYLOAD:", res.data);
     
-    if (res.data?.token || u?.token) {
-      localStorage.setItem("token", res.data.token || u.token);
+    const u = res.data?.user;
+    
+    // 🚀 Bulletproof token extraction fallback sequence
+    const token = res.data?.token || u?.token || res.data?.data?.token;
+    
+    if (token) {
+      localStorage.setItem("token", token);
+    } else {
+      console.warn("No authentication token detected in the server response.");
     }
     
+    const normalized = { ...u, _id: u?._id || u?.id };
     setUser(normalized);
-    setRole(normalized.role);
+    setRole(normalized.role || "");
     localStorage.setItem("user", JSON.stringify(normalized));
+    
     return normalized;
+  };
+
+  /* =========================================
+      AUTHENTICATION GATEWAYS
+     ========================================= */
+
+  const login = async (data) => {
+    const res = await API.post("/auth/login", data);
+    return processLoginResponse(res);
   };
 
   const adminLogin = async (data) => {
     const res = await API.post("/auth/admin/login", data);
-    const u = res.data.user;
-    const normalized = { ...u, _id: u._id || u.id };
-    
-    if (res.data?.token || u?.token) {
-      localStorage.setItem("token", res.data.token || u.token);
-    }
-    
-    setUser(normalized);
-    setRole(normalized.role);
-    localStorage.setItem("user", JSON.stringify(normalized));
-    return normalized;
+    return processLoginResponse(res);
   };
 
   const superAdminLogin = async (data) => {
     const res = await API.post("/auth/superadmin/login", data);
-    const u = res.data.user;
-    const normalized = { ...u, _id: u._id || u.id };
-    
-    if (res.data?.token || u?.token) {
-      localStorage.setItem("token", res.data.token || u.token);
-    }
-    
-    setUser(normalized);
-    setRole(normalized.role);
-    localStorage.setItem("user", JSON.stringify(normalized));
-    return normalized;
+    return processLoginResponse(res);
   };
 
   const logout = async () => {
     const token = localStorage.getItem("token");
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
     await API.post("/auth/logout", {}, { headers }).catch(() => {});
-    setUser(null);
-    setRole("");
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
+    clearAuthSession();
   };
+
+  /* =========================================
+      STATE UPDATE & PASSWORD MANAGEMENT
+     ========================================= */
 
   const updateUser = (updated, callback = () => {}) => {
     if (typeof updated === "function") {
