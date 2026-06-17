@@ -1,19 +1,10 @@
 import axios from "axios";
 
-<<<<<<< HEAD
-// ✅ Automatically detect environment
-
-// ✅ Switch BASE URL automatically
-const AUTH_BASE_URL = "https://stay-next-auth-service-4.onrender.com/api"; // Production
-
-const API = axios.create({
-=======
 const AUTH_BASE_URL = "https://stay-next-auth-service-4.onrender.com/api";
 const ADMIN_BASE_URL = "https://stay-next-admin-service.onrender.com/api/admin";
 
 // 🔐 Instance for hitting Auth Services
 export const API = axios.create({
->>>>>>> 8b1d509582446aa0ec269aea294c995dbdf3860d
   baseURL: AUTH_BASE_URL,
   withCredentials: true,
 });
