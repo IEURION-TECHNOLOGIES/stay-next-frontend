@@ -17,25 +17,14 @@ const AgentVerification = () => {
   const [verificationStatus, setVerificationStatus] = useState(null);
   const [rejectionReason, setRejectionReason] = useState("");
 
-
-
-  // =====================
-  // BASIC INFO
-  // =====================
   const [profileImage, setProfileImage] = useState(null);
   const [previewProfile, setPreviewProfile] = useState(null);
   const [phone, setPhone] = useState("");
   const [state, setState] = useState("");
 
-  // =====================
-  // NIN IMAGE
-  // =====================
   const [ninSlip, setNinSlip] = useState(null);
   const [previewNin, setPreviewNin] = useState(null);
 
-  // =====================
-  // AGENCY
-  // =====================
   const [hasAgency, setHasAgency] = useState(false);
   const [agencyName, setAgencyName] = useState("");
   const [agencyEmail, setAgencyEmail] = useState("");
@@ -43,55 +32,45 @@ const AgentVerification = () => {
   const [agencyLogo, setAgencyLogo] = useState(null);
   const [previewLogo, setPreviewLogo] = useState(null);
 
-
-
   useEffect(() => {
-  const checkVerificationStatus = async () => {
-    try {
-      const res = await AGENTAPI.get("/agents/verification/my", {
-        params: { userId: user._id },
-      });
+    const checkVerificationStatus = async () => {
+      try {
+        const res = await AGENTAPI.get("/agents/verification/my", {
+          params: { userId: user._id },
+        });
 
-      const profile = res.data?.profile;
+        const profile = res.data?.profile;
 
-      if (profile?.status) {
-        setVerificationStatus(profile.status);
+        if (profile?.status) {
+          setVerificationStatus(profile.status);
 
-        if (profile.status === "rejected") {
-          setRejectionReason(
-            profile.rejectionReason ||
-              "Your verification was rejected. Please review your details and resubmit."
-          );
+          if (profile.status === "rejected") {
+            setRejectionReason(
+              profile.rejectionReason ||
+                "Your verification was rejected. Please review your details and resubmit."
+            );
+          }
+
+          if (profile.status === "approved") {
+            navigate("/agent-dashboard/overview");
+          }
         }
-
-        // ✅ AUTO REDIRECT IF APPROVED
-        if (profile.status === "approved") {
-          navigate("/agent-dashboard/overview");
-        }
+      } catch (error) {
+        setVerificationStatus(null);
       }
-    } catch (error) {
-      // No verification yet
-      setVerificationStatus(null);
+    };
+
+    if (user?._id) {
+      checkVerificationStatus();
     }
-  };
+  }, [user, navigate]);
 
-  if (user?._id) {
-    checkVerificationStatus();
-  }
-}, [user, navigate]);
-
-  // =====================
-  // CLEANUP
-  // =====================
   useEffect(() => {
     return () => {
       if (modalTimeoutRef.current) clearTimeout(modalTimeoutRef.current);
     };
   }, []);
 
-  // =====================
-  // IMAGE HANDLERS
-  // =====================
   const handleProfileChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -114,7 +93,7 @@ const AgentVerification = () => {
   };
 
   // =====================
-  // SUBMIT
+  // SUBMIT — FIXED
   // =====================
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -132,22 +111,18 @@ const AgentVerification = () => {
       setShowModal(true);
       setModalMessage("Submitting verification...");
 
-      // 1️⃣ Upload profile image
+      // 1️⃣ Upload profile image — no Content-Type header, let axios handle it
       const profileForm = new FormData();
       profileForm.append("image", profileImage);
 
-      const profileRes = await API.post(
-        "/auth/upload-profile",
-        profileForm,
-        { headers: { "Content-Type": "multipart/form-data" } }
-      );
+      const profileRes = await API.post("/auth/upload-profile", profileForm);
 
       updateUser({
         ...user,
         profileImage: profileRes.data.profileImage,
       });
 
-      // 2️⃣ Submit verification
+      // 2️⃣ Submit verification — no Content-Type header, let axios handle it
       const verifyForm = new FormData();
       verifyForm.append("phone", phone);
       verifyForm.append("state", state);
@@ -161,7 +136,6 @@ const AgentVerification = () => {
       }
 
       await AGENTAPI.post("/agents/verification/submit", verifyForm, {
-        headers: { "Content-Type": "multipart/form-data" },
         params: { userId: user._id },
       });
 
@@ -181,81 +155,53 @@ const AgentVerification = () => {
   };
 
   if (verificationStatus === "pending") {
-  return (
-  <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-white to-gray-100 px-4">
-    <div className="bg-white p-6 rounded-2xl shadow-xl max-w-md w-full text-center space-y-4 border border-gray-100">
-
-      {/* Icon */}
-      <div className="mx-auto w-16 h-16 rounded-full bg-yellow-100 flex items-center justify-center shadow-md">
-        <i className="fa-solid fa-hourglass-half text-yellow-500 text-2xl"></i>
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-white to-gray-100 px-4">
+        <div className="bg-white p-6 rounded-2xl shadow-xl max-w-md w-full text-center space-y-4 border border-gray-100">
+          <div className="mx-auto w-16 h-16 rounded-full bg-yellow-100 flex items-center justify-center shadow-md">
+            <i className="fa-solid fa-hourglass-half text-yellow-500 text-2xl"></i>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-800">Verification Pending</h2>
+          <p className="text-gray-600 text-sm leading-relaxed">
+            Your verification has been submitted and is currently under review.
+          </p>
+          <div className="flex items-center justify-center gap-2 text-xs text-gray-500">
+            <i className="fa-regular fa-clock text-yellow-500"></i>
+            <span>
+              Feedback within <span className="font-semibold text-gray-700">48 hours</span>
+            </span>
+          </div>
+          <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 rounded-xl px-4 py-3 text-xs flex gap-2 items-start">
+            <i className="fa-solid fa-triangle-exclamation mt-0.5"></i>
+            <span>Agent dashboard access will be enabled after approval.</span>
+          </div>
+          <div className="bg-gray-50 rounded-xl px-4 py-3 text-xs text-gray-600 flex gap-2 items-start">
+            <i className="fa-solid fa-phone-volume text-green-600 mt-0.5"></i>
+            <span>Ensure your phone and email are reachable during review.</span>
+          </div>
+          <button
+            onClick={() => navigate("/")}
+            className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white py-2.5 rounded-xl text-sm font-semibold transition shadow"
+          >
+            <i className="fa-solid fa-arrow-left"></i>
+            Back to Homepage
+          </button>
+          <p className="text-[11px] text-gray-400">Thank you for your patience.</p>
+        </div>
       </div>
-
-      {/* Title */}
-      <h2 className="text-2xl font-bold text-gray-800">
-        Verification Pending
-      </h2>
-
-      {/* Description */}
-      <p className="text-gray-600 text-sm leading-relaxed">
-        Your verification has been submitted and is currently under review.
-      </p>
-
-      {/* Timeline */}
-      <div className="flex items-center justify-center gap-2 text-xs text-gray-500">
-        <i className="fa-regular fa-clock text-yellow-500"></i>
-        <span>
-          Feedback within{" "}
-          <span className="font-semibold text-gray-700">48 hours</span>
-        </span>
-      </div>
-
-      {/* Warning box */}
-      <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 rounded-xl px-4 py-3 text-xs flex gap-2 items-start">
-        <i className="fa-solid fa-triangle-exclamation mt-0.5"></i>
-        <span>
-          Agent dashboard access will be enabled after approval.
-        </span>
-      </div>
-
-      {/* Contact reminder */}
-      <div className="bg-gray-50 rounded-xl px-4 py-3 text-xs text-gray-600 flex gap-2 items-start">
-        <i className="fa-solid fa-phone-volume text-green-600 mt-0.5"></i>
-        <span>
-          Ensure your phone and email are reachable during review.
-        </span>
-      </div>
-
-      {/* Button */}
-      <button
-        onClick={() => navigate("/")}
-        className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white py-2.5 rounded-xl text-sm font-semibold transition shadow"
-      >
-        <i className="fa-solid fa-arrow-left"></i>
-        Back to Homepage
-      </button>
-
-      {/* Footer */}
-      <p className="text-[11px] text-gray-400">
-        Thank you for your patience.
-      </p>
-    </div>
-  </div>
-);
-
-}
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-6">
       <div className="bg-white p-10 rounded-3xl shadow max-w-3xl w-full">
         <form onSubmit={handleSubmit} className="space-y-8">
 
-          {/* HEADER */}
           <div className="text-center">
             <img src={logo} className="w-24 mx-auto mb-2" />
             <h2 className="text-3xl font-bold">Agent Verification</h2>
           </div>
 
-          {/* AGENCY TOGGLE */}
           <div className="flex items-center gap-3">
             <input
               type="checkbox"
@@ -267,17 +213,12 @@ const AgentVerification = () => {
 
           <div
             className={`grid gap-8 ${
-              hasAgency
-                ? "md:grid-cols-2"
-                : "md:grid-cols-1 justify-items-center"
+              hasAgency ? "md:grid-cols-2" : "md:grid-cols-1 justify-items-center"
             }`}
           >
-
-            {/* AGENCY SECTION */}
             {hasAgency && (
               <div className="space-y-5">
                 <p className="text-center text-lg font-bold">Company Information</p>
-                {/* AGENCY LOGO – TOP CENTER */}
                 <div className="flex justify-center">
                   <CircularImageUpload
                     label="Company Logo"
@@ -285,16 +226,14 @@ const AgentVerification = () => {
                     onChange={handleLogoChange}
                   />
                 </div>
-
                 <InputField label="Company Name *" value={agencyName} setValue={setAgencyName} />
                 <InputField label="Company Email *" value={agencyEmail} setValue={setAgencyEmail} />
                 <InputField label="Company Phone *" value={agencyPhone} setValue={setAgencyPhone} />
               </div>
             )}
 
-            {/* PERSONAL */}
             <div className={`space-y-4 w-full ${!hasAgency ? "max-w-md" : ""}`}>
-              <p className="text-center font-semibold text">Personal Information</p>
+              <p className="text-center font-semibold">Personal Information</p>
               <div className="flex justify-center">
                 <CircularImageUpload
                   label="Profile Photo"
@@ -302,7 +241,6 @@ const AgentVerification = () => {
                   onChange={handleProfileChange}
                 />
               </div>
-
               <InputField label="Phone *" value={phone} setValue={setPhone} />
               <SelectField
                 label="State of business or residence *"
@@ -313,7 +251,6 @@ const AgentVerification = () => {
             </div>
           </div>
 
-          {/* NIN SLIP */}
           <div className="flex justify-center">
             <RectImageUpload
               label="Upload NIN Slip *"
@@ -331,7 +268,6 @@ const AgentVerification = () => {
         </form>
       </div>
 
-      {/* MODAL */}
       {showModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
           <div className="bg-white px-6 py-4 rounded-xl font-semibold">
@@ -342,10 +278,6 @@ const AgentVerification = () => {
     </div>
   );
 };
-
-/* =====================
-   REUSABLE COMPONENTS
-===================== */
 
 const InputField = ({ label, value, setValue }) => (
   <div>
