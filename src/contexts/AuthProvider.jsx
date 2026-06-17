@@ -61,7 +61,9 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (data) => {
     const res = await API.post("/auth/login", data);
+    console.log("LOGIN RESPONSE:", res.data); // ← add this
     const u = res.data.user;
+    console.log("TOKEN:", u.token);
     const normalized = { ...u, _id: u._id || u.id };
     setUser(normalized);
     setRole(normalized.role);
