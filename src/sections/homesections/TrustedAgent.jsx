@@ -15,7 +15,7 @@ function TrustedAgent() {
         setLoading(true);
         console.log("📡 Fetching agents from backend...");
 
-        const res = await AGENTAPI.get("/agents/profile/all"); // Ensure your backend route returns { agents: [] }
+        const res = await AGENTAPI.get("/agents/profile/all"); // Ensure backend route returns { agents: [] }
 
         console.log("✅ Raw response:", res.data);
 
@@ -57,7 +57,7 @@ function TrustedAgent() {
   return (
     <div className="max-w-6xl mx-auto px-4 py-6 bg-gray-900 rounded-xl shadow-lg -mt-60 md:-mt-16 md:mb-20">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-5">
-        {/* 🧑‍💼 Agent Images */}
+        {/* 🧑‍💼 Agent Images with Verification Indicators */}
         <div className="flex items-center justify-center md:justify-start -space-x-4 overflow-x-auto">
           {loading ? (
             <p className="text-white">Loading agents...</p>
@@ -65,15 +65,30 @@ function TrustedAgent() {
             <p className="text-white">No agents available.</p>
           ) : (
             <div className="flex -space-x-4 overflow-x-auto px-2">
-              {displayAgents.map((agent) => (
-                <img
-                  key={agent._id}
-                  src={agent.profileImage || "/default-agent.png"}
-                  alt={agent.name}
-                  title={agent.name}
-                  className="h-12 w-12 md:h-14 md:w-14 rounded-full border-2 border-white object-cover hover:scale-110 transition transform"
-                />
-              ))}
+              {displayAgents.map((agent) => {
+                const name = agent.user?.name || agent.agencyName || "Agent";
+                const profileImg = agent.profileImage || agent.user?.profileImage || "/default-agent.png";
+                
+                return (
+                  <div key={agent._id} className="relative z-10 hover:z-20 transition group">
+                    <img
+                      src={profileImg}
+                      alt={name}
+                      title={name}
+                      className="h-12 w-12 md:h-14 md:w-14 rounded-full border-2 border-white object-cover hover:scale-110 transition transform duration-200"
+                    />
+                    {/* 🌟 ABSOLUTE VERIFICATION MINI-BADGE FOR STACKED AVATARS */}
+                    {agent.status === "approved" && (
+                      <span 
+                        className="absolute bottom-0 right-0 h-3.5 w-3.5 bg-green-500 border-2 border-gray-900 rounded-full flex items-center justify-center shadow-md"
+                        title="Verified Agent"
+                      >
+                        <i className="fas fa-check text-[7px] text-white font-extrabold hidden group-hover:block"></i>
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
