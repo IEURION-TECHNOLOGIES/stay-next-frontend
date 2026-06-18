@@ -21,6 +21,22 @@ function AgentPropertiesDetails() {
     }).format(amount);
   };
 
+  // 🌟 Dynamic Action Text Mapping based on transactionType
+  const getActionText = (type) => {
+    if (!type) return "View";
+    switch (type.toLowerCase()) {
+      case "sale":
+      case "sell":
+        return "Buy Now";
+      case "rent":
+        return "Rent Now";
+      case "lease":
+        return "Lease Now";
+      default:
+        return `${type} Now`;
+    }
+  };
+
   useEffect(() => {
     if (!user) return;
 
@@ -28,7 +44,7 @@ function AgentPropertiesDetails() {
       try {
         setLoading(true);
         const res = await AGENTAPI.get(`/agents/properties/single/${id}`);
-        console.log(res.data.property)
+        console.log("Property API response payload:", res.data.property);
         setProperty(res.data.property);
       } catch (err) {
         console.error("Failed to fetch property:", err);
@@ -73,10 +89,15 @@ function AgentPropertiesDetails() {
     );
   }
 
-  // 🌟 CLOUDINARY ONLY — VIDEOS FIRST
-  const videoSlides = property.videos || [];   // cloudinary video URLs
-  const imageSlides = property.images || [];   // cloudinary image URLs
+  const videoSlides = property.videos || [];
+  const imageSlides = property.images || [];
   const slides = [...videoSlides, ...imageSlides];
+
+  // 🌟 Safe Agent Metadata Extracting Fields (Supports Flat & Nested Structures)
+  const agentData = property.agent || null;
+  const agentUser = agentData?.user || (typeof agentData === "object" ? agentData : null);
+  const agentName = agentUser?.name || agentData?.agencyName || "Professional Agent";
+  const agentImage = agentData?.profileImage || agentUser?.profileImage || "";
 
   return (
     <div className="container mx-auto px-4 py-8 mt-20 md:mt-10">
@@ -94,21 +115,19 @@ function AgentPropertiesDetails() {
       <div className="relative w-full max-w-4xl mx-auto mb-6 aspect-video">
         {slides[currentSlide] ? (
           slides[currentSlide].endsWith(".mp4") ||
-          slides[currentSlide].includes("video")
-            ? (
-                <video
-                  className="w-full h-full rounded-xl shadow-lg"
-                  src={slides[currentSlide]}
-                  controls
-                ></video>
-              )
-            : (
-                <img
-                  src={slides[currentSlide]}
-                  alt="Property"
-                  className="w-full h-full object-cover rounded-xl shadow-lg"
-                />
-              )
+          slides[currentSlide].includes("video") ? (
+            <video
+              className="w-full h-full rounded-xl shadow-lg"
+              src={slides[currentSlide]}
+              controls
+            ></video>
+          ) : (
+            <img
+              src={slides[currentSlide]}
+              alt="Property"
+              className="w-full h-full object-cover rounded-xl shadow-lg"
+            />
+          )
         ) : null}
 
         {/* Arrows */}
@@ -147,8 +166,7 @@ function AgentPropertiesDetails() {
                 currentSlide === index ? "border-green-600" : "border-transparent"
               }`}
             >
-              {slide.endsWith(".mp4") ||
-              slide.includes("video") ? (
+              {slide.endsWith(".mp4") || slide.includes("video") ? (
                 <video src={slide} className="w-full h-full object-cover"></video>
               ) : (
                 <img
@@ -193,70 +211,63 @@ function AgentPropertiesDetails() {
         </div>
       </div>
 
-      {/* TRANSACTION BUTTON */}
+      {/* 🌟 TRANSACTION BUTTON WITH DYNAMIC MAPPING */}
       {property.transactionType && (
         <div className="flex justify-center mb-6">
-          <button className="px-6 py-3 bg-green-600 text-white rounded-lg shadow hover:bg-green-700 transition">
-            {property.transactionType}
+          <button className="px-8 py-3 bg-green-600 text-white font-semibold rounded-xl shadow-md hover:bg-green-700 transition transform hover:scale-[1.01]">
+            {getActionText(property.transactionType)}
           </button>
         </div>
       )}
 
-     {/* AGENT INFO */}
-{property.agent && (
-  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-    <h2 className="text-lg font-semibold text-gray-900 mb-4">
-      Agent Information
-    </h2>
+      {/* AGENT INFO */}
+      {agentData && (
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            Agent Information
+          </h2>
 
-    <div className="flex items-center gap-4">
-      {/* Avatar */}
-      <div className="relative">
-        <img
-          src={
-            property.agent?.user.profileImage?.trim()
-              ? property.agent?.user.profileImage
-              : "https://ui-avatars.com/api/?name=" +
-                encodeURIComponent(property.agent?.user.name || "Agent") +
-                "&background=16a34a&color=fff"
-          }
-          alt="Agent"
-          className="w-16 h-16 rounded-full object-cover border-2 border-green-600"
-        />
+          <div className="flex items-center gap-4">
+            {/* Avatar */}
+            <div className="relative">
+              <img
+                src={
+                  agentImage.trim()
+                    ? agentImage
+                    : `https://ui-avatars.com/api/?name=${encodeURIComponent(agentName)}&background=16a34a&color=fff`
+                }
+                alt="Agent Profile"
+                className="w-16 h-16 rounded-full object-cover border-2 border-green-600"
+              />
 
-        {/* Verification Badge */}
-        <span
-          className={`absolute -bottom-1 right-1 px-2 py-0.5 text-xs rounded-full font-medium ${
-            property.agent.status === "approved"
-              ? "bg-green-600 text-white"
-              : "bg-gray-200 text-gray-600"
-          }`}
-        >
-          {property.agent.status === "approved"
-            ? "Verified"
-            : "Pending"}
-        </span>
-      </div>
+              {/* Verification Badge */}
+              <span
+                className={`absolute -bottom-1 right-1 px-2 py-0.5 text-xs rounded-full font-medium ${
+                  agentData.status === "approved"
+                    ? "bg-green-600 text-white"
+                    : "bg-gray-200 text-gray-600"
+                }`}
+              >
+                {agentData.status === "approved" ? "Verified" : "Pending"}
+              </span>
+            </div>
 
-      {/* Agent Meta */}
-      <div>
-        <h3 className="font-semibold text-gray-900">
-          {property.agent?.user.name || "Unnamed Agent"}
-        </h3>
+            {/* Agent Meta */}
+            <div>
+              <h3 className="font-semibold text-gray-900">
+                {agentName}
+              </h3>
 
-        <p className="text-sm text-gray-500">
-          {property.agent.state || "Location not specified"}
-        </p>
-      </div>
-    </div>
-
-  </div>
-)}
+              <p className="text-sm text-gray-500">
+                {agentData.state || "Location not specified"}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
 }
 
 export default AgentPropertiesDetails;
-
-
