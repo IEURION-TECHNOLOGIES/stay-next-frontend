@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import ADMINAPI from "../../utils/axios";
+import { AdminAPI as ADMINAPI } from "../../utils/axios";
 
 export default function AdminAgentDashboard() {
   const [agents, setAgents] = useState([]);
