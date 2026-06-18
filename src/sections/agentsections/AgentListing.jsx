@@ -12,7 +12,6 @@ export default function AgentProfile() {
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [connected, setConnected] = useState(false);
-  const [hovered, setHovered] = useState(false);
 
   const formatPrice = (amount) =>
     new Intl.NumberFormat("en-NG", {
@@ -27,15 +26,10 @@ export default function AgentProfile() {
     const fetchAgentProfile = async () => {
       try {
         setLoading(true);
-
         const res = await AGENTAPI.get(`/agents/profile/${id}`);
         console.log("✅ Agent API response:", res.data);
 
-        /* ============================
-           BACKEND IS SOURCE OF TRUTH
-        ============================ */
         const { agent, properties } = res.data;
-
         setAgent(agent);
         setProperties(properties || []);
       } catch (err) {
@@ -89,8 +83,9 @@ export default function AgentProfile() {
   ============================ */
   const handleCall = () => {
     if (!connected) return;
-    if (!agent.phone) return alert("Phone number not available");
-    window.location.href = `tel:${agent.phone}`;
+    const phoneNumber = agent.phone || agent.user?.phone;
+    if (!phoneNumber) return alert("Phone number not available");
+    window.location.href = `tel:${phoneNumber}`;
   };
 
   const handleConnect = () => {
@@ -101,11 +96,7 @@ export default function AgentProfile() {
      RENDER
   ============================ */
   return (
-    <div
-      className="min-h-screen bg-gray-50"
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-    >
+    <div className="min-h-screen bg-gray-50">
       <div className="max-w-[1000px] mx-auto">
         {/* COVER IMAGE */}
         <div className="relative w-full h-60 md:h-52 bg-gradient-to-r from-green-700 via-green-500 to-green-400 rounded-b-2xl shadow-lg">
@@ -170,22 +161,18 @@ export default function AgentProfile() {
                     : "bg-green-600 text-white hover:bg-green-700"
                 } font-semibold transition flex items-center gap-2`}
               >
-                <i
-                  className={`fa ${
-                    connected ? "fa-comments" : "fa-user-plus"
-                  }`}
-                ></i>
+                <i className={`fa ${connected ? "fa-comments" : "fa-user-plus"}`}></i>
                 {connected ? "Chat" : "Connect"}
               </button>
 
               <button
                 onClick={handleCall}
                 className={`px-5 py-2 rounded-lg bg-blue-600 text-white font-semibold flex items-center gap-2 transition ${
-                  connected && hovered
-                    ? "hover:bg-blue-700 opacity-100"
+                  connected
+                    ? "hover:bg-blue-700 opacity-100 cursor-pointer"
                     : "opacity-40 cursor-not-allowed"
                 }`}
-                disabled={!connected || !hovered}
+                disabled={!connected}
               >
                 <i className="fa fa-phone"></i> Call
               </button>
