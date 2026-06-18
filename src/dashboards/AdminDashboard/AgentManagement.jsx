@@ -22,7 +22,7 @@ export default function AdminAgentDashboard() {
   const fetchAgents = async () => {
     try {
       setLoading(true);
-      const res = await ADMINAPI.get("/agents");
+      const res = await ADMINAPI.get("/admin/agents");
       console.log(res.data.agents)
       setAgents(res.data.agents || []);
     } catch (err) {
@@ -51,7 +51,7 @@ export default function AdminAgentDashboard() {
   /* ================= ACTIONS ================= */
   const handleApprove = async (id) => {
     try {
-      await ADMINAPI.put(`/agents/approve/${id}`, {
+      await ADMINAPI.put(`/admin/agents/approve/${id}`, {
         message: "Your verification has been approved",
       });
       fetchAgents();
@@ -67,7 +67,7 @@ const handleSuspend = async (agent) => {
   if (!reason) return;
 
   try {
-    await ADMINAPI.put(`/agents/suspend/${agent._id}`, { reason });
+    await ADMINAPI.put(`/admin/agents/suspend/${agent._id}`, { reason });
     fetchAgents();
   } catch (err) {
     console.error("Suspend failed", err);
@@ -91,7 +91,7 @@ const handleUnsuspend = async (agent) => {
     }
 
     try {
-      await ADMINAPI.put(`/agents/reject/${rejectingAgentId}`, {
+      await ADMINAPI.put(`/admin/agents/reject/${rejectingAgentId}`, {
         message: rejectMessage,
       });
 
@@ -108,7 +108,7 @@ const handleUnsuspend = async (agent) => {
     try {
       await Promise.all(
         selectedAgents.map((id) =>
-          ADMINAPI.put(`/agents/approve/${id}`, {
+          ADMINAPI.put(`/admin/agents/approve/${id}`, {
             message: "Your verification has been approved",
           })
         )
