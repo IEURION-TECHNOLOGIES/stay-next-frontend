@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const ADMIN_BASE_URL = "https://stay-next-admin-service.onrender.com/api/admin";
+const ADMIN_BASE_URL = "https://stay-next-admin-service.onrender.com/api";
 const AUTH_BASE_URL = "https://stay-next-auth-service-4.onrender.com/api";
 
 // 🔐 Instance for hitting Auth Services
