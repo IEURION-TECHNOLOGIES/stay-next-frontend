@@ -67,6 +67,7 @@ const Register = () => {
       if (newUser?.id) await trackReferral(newUser.id);
 
       setSuccessMessage("Registration successful!");
+      clearAuthSession();
       navigate("/register-success");
     } catch (err) {
       setError([err.response?.data?.message || "Registration failed"]);
