@@ -75,7 +75,7 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
      */
     if (verificationStatus === "approved") { 
       return (
-       <Navigate to="/agent-dashboard/overview" replace />;
+        <Navigate to="/agent-dashboard/overview" replace />
       );
     }
   }
