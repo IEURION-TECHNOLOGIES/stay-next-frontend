@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import AuthContext from "./AuthContext";
-import { API } from "../utils/axios"; // ✅ Named import ensures consistency with the new configuration
+import { API } from "../utils/axios";
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -13,8 +13,6 @@ export const AuthProvider = ({ children }) => {
   const fetchUser = async () => {
     try {
       const token = localStorage.getItem("token");
-      
-      // Force token header fallback for cross-domain fetchUser verification
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
       const res = await API.get("/auth/getMe", { headers });
       const u = res.data.user || null;
@@ -70,32 +68,29 @@ export const AuthProvider = ({ children }) => {
   // ⚙️ Unified processor to capture token structures flawlessly
   const processLoginResponse = (res) => {
     console.log("LOGIN RESPONSE PAYLOAD:", res.data);
-    
-    // 1. Extract the raw nested user block
+
     const rawUser = res.data?.user;
-    
-    // 2. 🚀 THE CRITICAL CAPTURE: Look directly inside the user object block for the token!
     const token = res.data?.token || rawUser?.token;
-    
+
     if (token) {
       localStorage.setItem("token", token);
       console.log("✅ Token successfully isolated and locked into localStorage!");
     } else {
       console.warn("⚠️ No authentication token detected in the server response payload.");
     }
-    
-    // 3. Clean up the user object so we don't save the token inside the user state duplicate
+
     const cleanUser = { ...rawUser };
-    delete cleanUser.token; // Clean extraction tracking
-    
+    delete cleanUser.token;
+
     const normalized = { ...cleanUser, _id: cleanUser?._id || cleanUser?.id };
-    
+
     setUser(normalized);
     setRole(normalized.role || "");
     localStorage.setItem("user", JSON.stringify(normalized));
-    
+
     return normalized;
   };
+
   /* =========================================
       AUTHENTICATION GATEWAYS
      ========================================= */
@@ -103,6 +98,11 @@ export const AuthProvider = ({ children }) => {
   const login = async (data) => {
     const res = await API.post("/auth/login", data);
     return processLoginResponse(res);
+  };
+
+  const googleLogin = async (googleToken) => {
+    const res = await API.post("/auth/google-login", { token: googleToken });
+    return processLoginResponse(res); // ✅ saves token from Google login response
   };
 
   const adminLogin = async (data) => {
@@ -159,6 +159,7 @@ export const AuthProvider = ({ children }) => {
         role,
         isAuthenticated,
         login,
+        googleLogin,
         adminLogin,
         superAdminLogin,
         logout,
