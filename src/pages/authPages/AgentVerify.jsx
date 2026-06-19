@@ -52,7 +52,9 @@ const AgentVerification = () => {
           }
 
           if (profile.status === "approved") {
-            navigate("/agent-dashboard/overview");
+            navigate("/login", { 
+              state: { message: "Your account has been approved! Please log in to continue." } 
+            });
           }
         }
       } catch (error) {
