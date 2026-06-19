@@ -9,7 +9,6 @@ export const AuthProvider = ({ children }) => {
 
   const isAuthenticated = !!user;
 
-  // 🔄 Sync and validate user state on boot/refresh
   const fetchUser = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -36,7 +35,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // 🧼 Centralized clear session utility
   const clearAuthSession = () => {
     setUser(null);
     setRole("");
@@ -46,6 +44,13 @@ export const AuthProvider = ({ children }) => {
 
   // 📦 Initialize App Auth State
   useEffect(() => {
+    // ✅ Skip auto-login on registration success page
+    if (window.location.pathname === "/register-success") {
+      clearAuthSession();
+      setLoading(false);
+      return;
+    }
+
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
       const parsed = JSON.parse(storedUser);
@@ -65,7 +70,6 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  // ⚙️ Unified processor to capture token structures flawlessly
   const processLoginResponse = (res) => {
     console.log("LOGIN RESPONSE PAYLOAD:", res.data);
 
@@ -91,18 +95,14 @@ export const AuthProvider = ({ children }) => {
     return normalized;
   };
 
-  /* =========================================
-      AUTHENTICATION GATEWAYS
-     ========================================= */
-
   const login = async (data) => {
     const res = await API.post("/auth/login", data);
     return processLoginResponse(res);
   };
 
   const googleLogin = async (googleToken) => {
-    const res = await API.post("/auth/google-login", { token: googleToken });
-    return processLoginResponse(res); // ✅ saves token from Google login response
+    const res = await API.post("/auth/google", { token: googleToken });
+    return processLoginResponse(res);
   };
 
   const adminLogin = async (data) => {
@@ -121,10 +121,6 @@ export const AuthProvider = ({ children }) => {
     await API.post("/auth/logout", {}, { headers }).catch(() => {});
     clearAuthSession();
   };
-
-  /* =========================================
-      STATE UPDATE & PASSWORD MANAGEMENT
-     ========================================= */
 
   const updateUser = (updated, callback = () => {}) => {
     if (typeof updated === "function") {
@@ -167,6 +163,7 @@ export const AuthProvider = ({ children }) => {
         fetchUser,
         updateUser,
         resetPassword,
+        clearAuthSession, // ✅ exposed so Register.jsx can call it
       }}
     >
       {!loading && children}
