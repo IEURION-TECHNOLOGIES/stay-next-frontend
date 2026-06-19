@@ -50,12 +50,6 @@ const AgentVerification = () => {
                 "Your verification was rejected. Please review your details and resubmit."
             );
           }
-
-          if (profile.status === "approved") {
-            navigate("/login", { 
-              state: { message: "Your account has been approved! Please log in to continue." } 
-            });
-          }
         }
       } catch (error) {
         setVerificationStatus(null);
