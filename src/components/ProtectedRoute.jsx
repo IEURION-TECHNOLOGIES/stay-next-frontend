@@ -73,14 +73,9 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
     /* * ✅ UPDATED: If an agent's status is approved, clear the temporary, 
      * unapproved verification session context and force them to /login
      */
-    if (verificationStatus === "approved") {
-      clearAuthSession(); 
+    if (verificationStatus === "approved") { 
       return (
-        <Navigate
-          to="/login"
-          replace
-          state={{ message: "Your account has been approved! Please log in to securely access your dashboard." }}
-        />
+       <Navigate to="/agent-dashboard/overview" replace />;
       );
     }
   }
