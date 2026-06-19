@@ -71,24 +71,25 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
     }
 
     // ✅ ONLY CHANGE: approved without token → force login
-    if (verificationStatus === "approved") {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        return (
-          <Navigate
-            to="/login"
-            replace
-            state={{ message: "Your account has been approved! Please log in to continue." }}
-          />
-        );
-      }
-      if (
-        location.pathname === "/agent-verification" ||
-        location.pathname === "/policy"
-      ) {
-        return <Navigate to="/agent-dashboard/overview" replace />;
-      }
-    }
+  /**
+ * APPROVED — force login to save token properly
+ */
+if (verificationStatus === "approved") {
+  if (
+    location.pathname === "/agent-verification" ||
+    location.pathname === "/policy"
+  ) {
+    return (
+      <Navigate
+        to="/login"
+        replace
+        state={{ message: "Your account has been approved! Please log in to continue." }}
+      />
+    );
+  }
+  // already logged in properly (token exists) — allow through
+  return children;
+}
   }
 
   return children;
