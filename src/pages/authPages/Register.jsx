@@ -88,7 +88,7 @@ const Register = () => {
     setError([]);
 
     try {
-      const res = await API.post("/auth/google-login", {
+      const res = await API.post("/auth/google", {
         token: credentialResponse.credential,
       });
 
