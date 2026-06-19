@@ -5,7 +5,7 @@ import AGENTAPI from "../utils/agentaxios";
 import LoadingModal from "../utils/loader";
 
 const ProtectedRoute = ({ children, allowedRoles = [] }) => {
-  const { user, isAuthenticated, role, loading } = useAuth();
+  const { user, isAuthenticated, role, loading, clearAuthSession } = useAuth();
   const location = useLocation();
   const [verificationStatus, setVerificationStatus] = useState(undefined);
   const [verifLoading, setVerifLoading] = useState(true);
@@ -70,26 +70,19 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
       return <Navigate to="/agent-verification" replace />;
     }
 
-    // ✅ ONLY CHANGE: approved without token → force login
-  /**
- * APPROVED — force login to save token properly
- */
-if (verificationStatus === "approved") {
-  if (
-    location.pathname === "/agent-verification" ||
-    location.pathname === "/policy"
-  ) {
-    return (
-      <Navigate
-        to="/login"
-        replace
-        state={{ message: "Your account has been approved! Please log in to continue." }}
-      />
-    );
-  }
-  // already logged in properly (token exists) — allow through
-  return children;
-}
+    /* * ✅ UPDATED: If an agent's status is approved, clear the temporary, 
+     * unapproved verification session context and force them to /login
+     */
+    if (verificationStatus === "approved") {
+      clearAuthSession(); 
+      return (
+        <Navigate
+          to="/login"
+          replace
+          state={{ message: "Your account has been approved! Please log in to securely access your dashboard." }}
+        />
+      );
+    }
   }
 
   return children;
