@@ -50,6 +50,9 @@ const AgentVerification = () => {
                 "Your verification was rejected. Please review your details and resubmit."
             );
           }
+          // if (profile.status === "approved"){
+            
+          // }
         }
       } catch (error) {
         setVerificationStatus(null);
