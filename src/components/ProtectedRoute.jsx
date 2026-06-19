@@ -73,10 +73,11 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
     /* * ✅ UPDATED: If an agent's status is approved, clear the temporary, 
      * unapproved verification session context and force them to /login
      */
-    if (verificationStatus === "approved") { 
-      return (
-        <Navigate to="/agent-dashboard/overview" replace />
-      );
+   if (verificationStatus === "approved") { 
+      if (location.pathname === "/agent-dashboard/overview") {
+        return children; // 👈 Allow them to view the page if they're already on it!
+      }
+      return <Navigate to="/agent-dashboard/overview" replace />;
     }
   }
 
