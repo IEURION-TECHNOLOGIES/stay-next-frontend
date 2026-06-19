@@ -3,12 +3,11 @@ import { useNavigate, Link } from 'react-router-dom';
 import logo from '../../assets/images/logo.png';
 import useAuth from '../../hooks/useAuth';
 import { GoogleLogin } from '@react-oauth/google';
-import API from '../../utils/axios';
+import { API } from '../../utils/axios';
 import LoadingModal from '../../utils/loader';
 
 const SuspendedAccountModal = ({ open, message, onClose }) => {
   if (!open) return null;
-
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[999]">
       <div className="bg-white max-w-md w-full rounded-2xl p-6 text-center shadow-xl">
@@ -21,9 +20,7 @@ const SuspendedAccountModal = ({ open, message, onClose }) => {
           <a href="/support" className="flex-1 py-2 bg-green-600 text-white rounded-lg text-center">
             Contact Support
           </a>
-          <button onClick={onClose} className="flex-1 py-2 border rounded-lg">
-            Close
-          </button>
+          <button onClick={onClose} className="flex-1 py-2 border rounded-lg">Close</button>
         </div>
       </div>
     </div>
@@ -32,19 +29,17 @@ const SuspendedAccountModal = ({ open, message, onClose }) => {
 
 const Login = () => {
   const navigate = useNavigate();
-  const { fetchUser } = useAuth(); // Destructure what we need for validation syncing
+  const { fetchUser } = useAuth();
 
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [error, setError] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-
   const [showSuspendedModal, setShowSuspendedModal] = useState(false);
   const [suspendedMessage, setSuspendedMessage] = useState('');
 
-  const handleChange = (e) => {
+  const handleChange = (e) =>
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-  };
 
   const redirectByRole = (role) => {
     if (!role) return navigate('/');
@@ -55,8 +50,17 @@ const Login = () => {
     else navigate('/');
   };
 
+  const handleSuspendedError = (status, msg) => {
+    if (status === 403 && msg?.toLowerCase().includes('suspend')) {
+      setSuspendedMessage(msg);
+      setShowSuspendedModal(true);
+      return true;
+    }
+    return false;
+  };
+
   /* =========================================
-      EMAIL / PASSWORD SUBMIT (DIRECT CAPTURE)
+      EMAIL / PASSWORD LOGIN
      ========================================= */
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -64,37 +68,22 @@ const Login = () => {
     setLoading(true);
 
     try {
-      // 1. Send the login request directly using our configured API axios instance
       const res = await API.post("/auth/login", formData);
-      
-      console.log("Direct Form Submit Response Payload:", res.data);
-
       const u = res.data?.user;
-      
-      // 2. 🚀 THE ULTIMATE FIX: Isolate the token directly from the response and force it to storage!
+
+      // ✅ Save token to localStorage
       const token = res.data?.token || u?.token;
       if (token) {
         localStorage.setItem("token", token);
-        console.log("🔒 Token caught and locked into localStorage by component directly!");
-      } else {
-        console.warn("⚠️ Backend responded successfully, but no string token property was found in the data payload.");
       }
 
-      // 3. Sync and update the app context context state safely
       await fetchUser();
-      
-      // 4. Redirect
       redirectByRole(u?.role);
     } catch (err) {
-      console.error("Form submit failure:", err);
       const status = err.response?.status;
       const msg = err.response?.data?.message;
 
-      if (status === 403 && msg?.toLowerCase().includes('suspend')) {
-        setSuspendedMessage(msg);
-        setShowSuspendedModal(true);
-        return;
-      }
+      if (handleSuspendedError(status, msg)) return;
 
       if (msg) setError([msg]);
       else if (err.response?.data?.errors) {
@@ -108,42 +97,39 @@ const Login = () => {
   };
 
   /* =========================================
-      GOOGLE SIGN-IN SUBMIT
+      GOOGLE LOGIN
      ========================================= */
   const handleGoogleSuccess = async (credentialResponse) => {
-    if (!credentialResponse?.credential) {
-      return setError(['Google sign-in failed']);
-    }
+    if (!credentialResponse?.credential) return setError(['Google sign-in failed']);
 
     setLoading(true);
     setError([]);
 
     try {
-      const res = await API.post('/auth/google', {
+      const res = await API.post('/auth/google-login', {
         token: credentialResponse.credential,
       });
 
-      const user = res.data.user;
-      
-      // Capture structural JWT output returned by Google registration/login route
-      const token = res.data?.token || user?.token;
+      const u = res.data?.user;
+
+      // ✅ Save token — backend now returns token in Google login response
+      const token = res.data?.token || u?.token;
       if (token) {
         localStorage.setItem("token", token);
-        console.log("🔒 Google Token locked into localStorage successfully!");
+        console.log("✅ Google token saved to localStorage");
+      } else {
+        console.warn("⚠️ No token in Google login response");
       }
-      
+
       await fetchUser();
-      redirectByRole(user.role);
+
+      if (u?.isNewUser) return navigate('/set-role');
+      redirectByRole(u?.role);
     } catch (err) {
       const status = err.response?.status;
       const msg = err.response?.data?.message;
 
-      if (status === 403 && msg?.toLowerCase().includes('suspend')) {
-        setSuspendedMessage(msg);
-        setShowSuspendedModal(true);
-        return;
-      }
-
+      if (handleSuspendedError(status, msg)) return;
       setError(['Google login failed']);
     } finally {
       setLoading(false);
@@ -153,7 +139,6 @@ const Login = () => {
   return (
     <>
       <LoadingModal loading={loading} message="Logging you in…" />
-
       <SuspendedAccountModal
         open={showSuspendedModal}
         message={suspendedMessage}
@@ -233,7 +218,6 @@ const Login = () => {
                 <span className="px-2 text-gray-500 text-sm">OR</span>
                 <hr className="flex-1 border-gray-300" />
               </div>
-
               <div className="flex justify-center">
                 <GoogleLogin
                   onSuccess={handleGoogleSuccess}
