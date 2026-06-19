@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import logo from '../../assets/images/logo.png';
 import useAuth from '../../hooks/useAuth';
 import { GoogleLogin } from '@react-oauth/google';
@@ -29,6 +29,8 @@ const SuspendedAccountModal = ({ open, message, onClose }) => {
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const approvalMessage = location.state?.message;
   const { fetchUser } = useAuth();
 
   const [formData, setFormData] = useState({ email: '', password: '' });
@@ -137,100 +139,106 @@ const Login = () => {
   };
 
   return (
-    <>
-      <LoadingModal loading={loading} message="Logging you in…" />
-      <SuspendedAccountModal
-        open={showSuspendedModal}
-        message={suspendedMessage}
-        onClose={() => setShowSuspendedModal(false)}
-      />
+  <>
+    <LoadingModal loading={loading} message="Logging you in…" />
+    <SuspendedAccountModal
+      open={showSuspendedModal}
+      message={suspendedMessage}
+      onClose={() => setShowSuspendedModal(false)}
+    />
+    {!loading && (
+      <div
+        className="bg-gray-200 min-h-screen flex items-center justify-center bg-cover bg-center"
+        style={{ backgroundImage: "url('/bg-realestate.jpg')" }}
+      >
+        <div className="bg-white shadow-lg p-6 rounded-lg max-w-md w-full backdrop-blur-sm bg-opacity-90">
+          <div className="flex flex-col items-center mb-6">
+            <img src={logo} alt="Logo" className="w-24 h-24 mb-2" />
+            <h2 className="text-2xl font-bold text-gray-800">Welcome Back</h2>
+            <p className="text-gray-500 text-sm">Please Login to continue</p>
+          </div>
 
-      {!loading && (
-        <div
-          className="bg-gray-200 min-h-screen flex items-center justify-center bg-cover bg-center"
-          style={{ backgroundImage: "url('/bg-realestate.jpg')" }}
-        >
-          <div className="bg-white shadow-lg p-6 rounded-lg max-w-md w-full backdrop-blur-sm bg-opacity-90">
-            <div className="flex flex-col items-center mb-6">
-              <img src={logo} alt="Logo" className="w-24 h-24 mb-2" />
-              <h2 className="text-2xl font-bold text-gray-800">Welcome Back</h2>
-              <p className="text-gray-500 text-sm">Please Login to continue</p>
+          {/* ✅ Approval success message */}
+          {approvalMessage && (
+            <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-center">
+              <i className="fas fa-circle-check text-green-600 mr-2"></i>
+              <span className="text-green-700 text-sm font-medium">{approvalMessage}</span>
             </div>
+          )}
 
-            {error.length > 0 && (
-              <div className="space-y-1 mb-4 text-center">
-                {error.map((msg, i) => (
-                  <p key={i} className="text-red-500 text-sm">{msg}</p>
-                ))}
-              </div>
-            )}
+          {error.length > 0 && (
+            <div className="space-y-1 mb-4 text-center">
+              {error.map((msg, i) => (
+                <p key={i} className="text-red-500 text-sm">{msg}</p>
+              ))}
+            </div>
+          )}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <input
+              type="email"
+              name="email"
+              placeholder="Email address"
+              className="border p-3 w-full rounded text-black"
+              value={formData.email}
+              onChange={handleChange}
+              required
+            />
+            <div className="relative">
               <input
-                type="email"
-                name="email"
-                placeholder="Email address"
-                className="border p-3 w-full rounded text-black"
-                value={formData.email}
+                type={showPassword ? 'text' : 'password'}
+                name="password"
+                placeholder="Password"
+                className="border p-3 w-full rounded text-black pr-10"
+                value={formData.password}
                 onChange={handleChange}
                 required
               />
-
-              <div className="relative">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  name="password"
-                  placeholder="Password"
-                  className="border p-3 w-full rounded text-black pr-10"
-                  value={formData.password}
-                  onChange={handleChange}
-                  required
-                />
-                <button
-                  type="button"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  <i className={`fa ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`} />
-                </button>
-              </div>
-
-              <div className="flex justify-between text-sm">
-                <Link to="/forgot-password" className="text-green-600 hover:underline">
-                  Forgot Password?
-                </Link>
-                <Link to="/register" className="text-green-600 hover:underline">
-                  Create New Account
-                </Link>
-              </div>
-
               <button
-                type="submit"
-                className="bg-green-600 text-white py-2 w-full rounded hover:bg-green-700"
+                type="button"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
+                onClick={() => setShowPassword(!showPassword)}
               >
-                Login
+                <i className={`fa ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`} />
               </button>
-            </form>
+            </div>
 
-            <div className="mt-6">
-              <div className="flex items-center justify-center my-3">
-                <hr className="flex-1 border-gray-300" />
-                <span className="px-2 text-gray-500 text-sm">OR</span>
-                <hr className="flex-1 border-gray-300" />
-              </div>
-              <div className="flex justify-center">
-                <GoogleLogin
-                  onSuccess={handleGoogleSuccess}
-                  onError={() => setError(['Google sign-in failed'])}
-                  text="continue_with"
-                />
-              </div>
+            <div className="flex justify-between text-sm">
+              <Link to="/forgot-password" className="text-green-600 hover:underline">
+                Forgot Password?
+              </Link>
+              <Link to="/register" className="text-green-600 hover:underline">
+                Create New Account
+              </Link>
+            </div>
+
+            <button
+              type="submit"
+              className="bg-green-600 text-white py-2 w-full rounded hover:bg-green-700"
+            >
+              Login
+            </button>
+          </form>
+
+          <div className="mt-6">
+            <div className="flex items-center justify-center my-3">
+              <hr className="flex-1 border-gray-300" />
+              <span className="px-2 text-gray-500 text-sm">OR</span>
+              <hr className="flex-1 border-gray-300" />
+            </div>
+            <div className="flex justify-center">
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={() => setError(['Google sign-in failed'])}
+                text="continue_with"
+              />
             </div>
           </div>
         </div>
-      )}
-    </>
-  );
+      </div>
+    )}
+  </>
+);
 };
 
 export default Login;
